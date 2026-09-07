@@ -11,7 +11,7 @@ cannot rely on an earlier phase merely because work was attempted.
 
 | Order | Phase / demo | Plan: question and safe behavior | Execute: bounded work | Accept: required evidence and gate | State |
 |---:|---|---|---|---|---|
-| 0 | Governance and environment preflight | Establish custody, source provenance, toolchain, Git remote, physical link, and passive JTAG identity. Do not program or send packets. | Initialize Git, register inputs, enumerate host link and JTAG chain. | Documentation is committed and pushed; scan identifies the expected FPGA without changing board state. | EXECUTED_PENDING_ACCEPTANCE |
+| 0 | Governance and environment preflight | Establish custody, source provenance, toolchain, Git remote, physical link, and passive JTAG identity. Do not program or send packets. | Initialize Git, register inputs, enumerate host link and JTAG chain. | Documentation is committed and pushed; scan identifies the expected FPGA without changing board state. | ACCEPTED |
 | 1 | configuration-safe | Can an authored minimal image be built and safely configured? All nonessential outputs remain benign. | Create canonical project Tcl, base XDC, clock/reset logic, and a configuration-safe GPIO demo after the board contract closes. | Self-checking simulation where applicable, implementation/timing evidence, exact candidate image identity, and explicit board observation. | PLANNED |
 | 2 | clock-reset | Are the actual board clocks and resets usable at declared frequencies? Keep external interfaces inactive. | Add reviewed clock constraints and reset sequencing to the shared board layer. | Timing is met for declared clocks; board observation confirms deterministic reset exit. | PLANNED |
 | 3 | sgmii-link | Can the FPGA and M88E1111 establish and maintain the intended Ethernet link? No protocol command affects acquisition. | Configure verified PHY management settings and SGMII PCS/PMA plus MAC only after lane, polarity, and clock facts are confirmed. | MDIO identity/status, PCS lock, link status, and error counters recorded. | PLANNED |
@@ -39,9 +39,11 @@ cannot rely on an earlier phase merely because work was attempted.
 
 - Criterion: repository process records, source register, contract, matrices,
   plan, and first UDP demo plan are committed and visible on origin/main.
-- Decision: PENDING_PUSH
-- Evidence: this bring-up unit and the initial Git commit to be recorded after
-  the first push.
+- Decision: ACCEPTED
+- Evidence: Git commit d5725bf, chore: establish UDP FPGA bring-up workflow,
+  pushed to origin/main on 2026-09-07. The commit includes all readable
+  schematic PDFs and all process records; the Word protocol source remains
+  outside the commit because its lock prevented safe Git reading.
 
 ## Product-baseline promotion plan
 

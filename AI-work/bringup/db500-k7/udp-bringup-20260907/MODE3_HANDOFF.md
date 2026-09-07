@@ -7,7 +7,7 @@
 - Canonical build entry: NOT_CREATED
 - Canonical simulation entry: NOT_CREATED
 - Tool/IP versions: Vivado 2021.1; Ethernet IP configuration NOT_CREATED
-- Source identity: Git initial commit pending
+- Source identity: Git commit d5725bf
 - Board contract identity: this unit, contract not frozen
 - Acceptance matrix identity: this unit, no qualified interfaces
 - Qualified release: NONE
