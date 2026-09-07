@@ -16,7 +16,7 @@
 | 阶段 | 状态 | 命令或过程 | 证据 | 结论 |
 |---|---|---|---|---|
 | 计划 | ACCEPTED | REQUIREMENTS.md 与 ARCHITECTURE.md | 当前计划单元 | 范围限制为安全的 ARP/UDP 回包 |
-| 契约 | OPEN | 核对 SGMII 通道、时钟、PHY 控制、MAC/IP/端口 | BOARD_CONTRACT.md 与 OQ-002 至 OQ-005 | 不允许实现 |
+| 契约 | OPEN | 核对 SGMII 参考时钟、PHY 控制、MAC/IP/端口；MGT116 lane 3 与极性已确认 | BOARD_CONTRACT.md 与 OQ-003 至 OQ-005 | 不允许实现 |
 | 仿真 | NOT_RUN | 后续自检以太网报文测试平台 | NONE | NOT_RUN |
 | 综合 | NOT_RUN | 后续源码驱动的 Vivado 构建 | NONE | NOT_RUN |
 | 实现 | NOT_RUN | 后续源码驱动的 Vivado 构建 | NONE | NOT_RUN |

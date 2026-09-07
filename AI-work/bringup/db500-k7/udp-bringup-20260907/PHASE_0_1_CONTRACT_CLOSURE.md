@@ -18,7 +18,7 @@
 
 | 事实 | 最小权威证据 | 可接受结论 |
 |---|---|---|
-| SGMII 通道和极性 | 核心板与 MCON 板间连接器引脚映射、PCB 网表或明确标注的原理图页 | 已确认，或因资料缺失而阻塞 |
+| SGMII 通道和极性 | 核心板与 MCON 板间连接器引脚映射、PCB 网表、明确标注的原理图页，或用户对实物组合板配对关系的确认 | 已确认，或因资料缺失而阻塞 |
 | GTX 参考时钟 | 原理图频率标注、BOM/晶振规格或板卡资料 | 已确认，或阻塞 |
 | PHY strap、MDIO 和复位 | MCON 原理图和 M88E1111 数据手册 | 已确认，或阻塞 |
 | 板卡版本 | 板卡丝印、BOM、版本标签或经核对的资料版本 | 已确认，或阻塞 |
@@ -51,8 +51,9 @@
 | DOCX 可视审阅 | 按文档读取流程尝试用随附渲染器生成页面图像；运行环境未提供 `soffice.exe`，渲染器在解析前以 `FileNotFoundError` 停止。 | 这是阅读环境限制，不改变已从 Word 段落和表格结构提取的字段结论；没有修改源 Word 文件。 |
 | SRC-001 核心板原理图 | 以 `pypdf` 严格模式关闭读取第 5、10 页。第 5 页列出 MGT116 的 TX0..3、RX0..3、CLK0/1；第 10 页把这些网络引至核心板连接器。 | MGT116 的可用资源和差分命名已确认；未出现到 SGMII 命名网络的板间对应关系。 |
 | SRC-002 MCON 原理图 | 以 `pypdf` 严格模式关闭读取第 4、8、9 页。第 9 页显示 M88E1111 的 S_IN+/- 到 SGMII_TX_P/N、S_OUT+/- 到 SGMII_RX_P/N，MDC/MDIO/INTN/RESETN 到 PHY 管理网络；第 8 页显示 AD9517 输入晶振标注 50 MHz 且输出 0/2 接 MGT116 CLK0/1；第 4 页显示这些网络经过板间连接器。 | PHY 端物理网络、P/N 名称和候选时钟对已确认。没有资料将 SGMII 命名网络绑定到 MGT116 的某一 TX/RX lane，也没有 AD9517 输出频率、PHY strap/MDIO 地址或复位时序。 |
-| 跨 PDF 可视对照 | 以只读渲染方式并列检查 SRC-002 第 4、9 页与 SRC-001 第 10 页，并检查 SRC-003 全部 12 页。SGMII 已精确追到 MCON J6 的 B26/B27/A26/A27；核心板 HT2 的 lane 3 为 A25/A26、B25/B26。J5/HT1、J7/HT3 的同名网络证实连接器对照规则后，J6/HT2 在 N/P 与 GND 处冲突。 | 形成 `SGMII_SIGNAL_TRACE.md`。该冲突是决定性阻塞；SRC-003 未显示 SGMII/MGT 续接，不能补足路径。 |
+| 跨 PDF 可视对照与用户硬件确认 | 以只读渲染方式并列检查 SRC-002 第 4、9 页与 SRC-001 第 10 页，并检查 SRC-003 全部 12 页。SGMII 精确追到 MCON J6 的 B26/B27/A26/A27；HT2 lane 3 为 A25/A26、B25/B26。用户随后提供截图，确认 `SGMII_TX_N = B26`、`SGMII_TX_P = B27`，并确认本实物 J6→HT2 的配对可闭合为 lane 3。 | 形成并修正 `SGMII_SIGNAL_TRACE.md`：`B26/B27 → A25/A26 → TX3_N/P`，`A26/A27 → B25/B26 → RX3_N/P`。此前将 J5/J7 的局部对照规则外推到 J6/HT2 的结论错误，已撤销；SRC-003 不参与该路径。 |
 | PDF 可视审阅 | 随附 Poppler 对两份原始 PDF 和仅页重建文件均报告 xref/trailer 解析错误；`pypdf` 可读取文字和页码。 | 临时重建文件仅保留在 `work/` 且未作为结论依据；当前无法通过该 PDF 渲染链路补足 PCB 映射。 |
+| 工作包一致性校验 | 运行 `validate-new-board-work-package.py`（设计根 `fpga/`）及 `validate-demo-work-package.py`（`udp-smoke-v1`）。 | 两项校验均返回 `PASS`；板卡工作包状态为 `DISCOVERED`，UDP Smoke Demo 状态为 `PLANNED`。 |
 
 ## 验收标准
 
@@ -66,6 +67,7 @@
 
 - 结论：BLOCKED
 - 结论日期：2026-09-07
-- 证据：已确认的协议、PHY 端和 MGT116 资源事实已同步至板卡契约；阻塞项已同步至 `OPEN-QUESTIONS.md`。
-- 未通过的关卡：无法以权威证据确认 SGMII 到 MGT116 的 lane/GT 端极性/有效参考频率；补充追踪还发现 MCON J6 与核心板 HT2 的接触点源资料冲突。PHY strap/MDIO 地址/复位时序和部署 MAC/IP/UDP 校验策略亦未确认。
+- 证据：已确认的协议、PHY 端、MGT116 资源及用户确认的 lane 3 映射已同步至板卡契约；剩余阻塞项已同步至 `OPEN-QUESTIONS.md`。
+- 未通过的关卡：SGMII 到 MGT116 lane 3、TX/RX 和 P/N 极性已确认，不再是阻塞项；但有效参考频率、PHY strap/MDIO 地址/复位时序、板卡实物版本和部署 MAC/IP/UDP 校验策略仍未确认。
+- 文档验收：修正后板卡工作包及 `udp-smoke-v1` Demo 工作包校验均已通过。
 - 安全结论：未创建 XDC、IP 或 RTL，未下载镜像，未对 PHY 写寄存器，未主动发包；因此本阶段不允许进入阶段 1、2、3 或 UDP Smoke 实现。

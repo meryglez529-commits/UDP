@@ -3,52 +3,50 @@
 ## 状态
 
 - 阶段：0.1 的补充只读追踪
-- 状态：BLOCKED_BY_SOURCE_CONFLICT
-- 决策问题：M88E1111 的 SGMII 差分对是否能通过 MCON 板间连接器唯一映射到核心板的一条 MGT116 GTX lane？
-- 最小证据：MCON J6 与核心板 HT2 的同一接触点对照，且与 J5/HT1、J7/HT3 的已对齐网络一致。
+- 状态：LANE_3_CONFIRMED_BY_USER
+- 决策问题：M88E1111 的 SGMII 差分对是否能通过 MCON 板间连接器映射到核心板的一条 MGT116 GTX lane？
+- 最小证据：MCON J6 信号接触点、核心板 HT2 的 MGT116 接触点，以及用户对实际 HT2-J6 配对关系的确认。
 - 禁止操作：不改 `fpga/`，不下载、不写 MDIO、不发包。
 
 ## 已追踪的物理路径
 
 | M88E1111 管脚 | MCON 第 9 页网络 | MCON 第 4 页 J6 接触点 | 作用 |
 |---|---|---|---|
-| `S_IN-`（A4） | 经 C536 后为 `SGMII_TX_N` | `B26` | PHY 的串行输入负端；应由 FPGA GTX TX 负端驱动 |
-| `S_IN+`（A3） | 经 C535 后为 `SGMII_TX_P` | `B27` | PHY 的串行输入正端；应由 FPGA GTX TX 正端驱动 |
-| `S_OUT-`（A8） | 经 C538 后为 `SGMII_RX_N` | `A26` | PHY 的串行输出负端；应进入 FPGA GTX RX 负端 |
-| `S_OUT+`（A7） | 经 C537 后为 `SGMII_RX_P` | `A27` | PHY 的串行输出正端；应进入 FPGA GTX RX 正端 |
+| `S_IN-`（A4） | 经 C536 后为 `SGMII_TX_N` | `B26` | PHY 的串行输入负端；由 FPGA GTX TX 负端驱动 |
+| `S_IN+`（A3） | 经 C535 后为 `SGMII_TX_P` | `B27` | PHY 的串行输入正端；由 FPGA GTX TX 正端驱动 |
+| `S_OUT-`（A8） | 经 C538 后为 `SGMII_RX_N` | `A26` | PHY 的串行输出负端；进入 FPGA GTX RX 负端 |
+| `S_OUT+`（A7） | 经 C537 后为 `SGMII_RX_P` | `A27` | PHY 的串行输出正端；进入 FPGA GTX RX 正端 |
 
-上述管脚、网络和 J6 接触点均由 MCON 原理图第 4、9 页的可视审阅确认。
+上述管脚、网络和 J6 接触点均由 MCON 原理图第 4、9 页的可视审阅确认。用户在 2026-09-07 提供的截图再次直接确认了 `SGMII_TX_N = B26`、`SGMII_TX_P = B27`。
 
-## 与核心板连接器的交叉对照
+## 与核心板连接器的配对关系
 
-核心板原理图第 10 页显示 HT2（`FX8-120P-SV92`）的 MGT116 数据通道如下：
+核心板原理图第 10 页显示 HT2（`FX8-120P-SV92`）的 MGT116 lane 3：
 
 | HT2 接触点 | 核心板网络 |
 |---|---|
 | `A25/A26` | `MGT116_TX3_N/P` |
 | `B25/B26` | `MGT116_RX3_N/P` |
-| `A27`、`B27` | GND |
 
-MCON 的 J5/J7 与核心板 HT1/HT3 中存在重复的同名网络对照，例如 J5 `B1` 的 `B12_L24_P` 对应 HT1 `A1`，J5 `A1` 的 `B12_L16_P` 对应 HT1 `B1`；J7 的 `A3` `B14_L16_P` 对应 HT3 `B3`。这证明同型号插座/插头组合在该资料中采用“J 板 `B[n]` 对 HT 板 `A[n]`、J 板 `A[n]` 对 HT 板 `B[n]`”的接触点对照。
+用户确认：本实物组合板的 MCON J6 与核心板 HT2 按以下接触点关系配对。连接器两侧的行号和观察方向不能由 J5/HT1、J7/HT3 的局部同名网络规则外推；此前将该规则套用至 J6/HT2 的推断是错误的。
 
-若把同一已验证对照规则应用到 J6/HT2，则得到：
+| MCON J6 信号 | J6 接触点 | 对应 HT2 接触点 | 核心板网络 | FPGA 方向 | 状态 |
+|---|---|---|---|---|---|
+| `SGMII_TX_N` | `B26` | `A25` | `MGT116_TX3_N` | FPGA GTX TX 负端 → PHY `S_IN-` | 已确认 |
+| `SGMII_TX_P` | `B27` | `A26` | `MGT116_TX3_P` | FPGA GTX TX 正端 → PHY `S_IN+` | 已确认 |
+| `SGMII_RX_N` | `A26` | `B25` | `MGT116_RX3_N` | PHY `S_OUT-` → FPGA GTX RX 负端 | 已确认 |
+| `SGMII_RX_P` | `A27` | `B26` | `MGT116_RX3_P` | PHY `S_OUT+` → FPGA GTX RX 正端 | 已确认 |
 
-| MCON J6 信号 | 依照 J5/J7 已验证规则对应的 HT2 接触点 | 核心板标注 | 结果 |
-|---|---|---|---|
-| `SGMII_TX_N`，`B26` | `A26` | `MGT116_TX3_P` | N/P 不相符 |
-| `SGMII_TX_P`，`B27` | `A27` | GND | 不可作为差分对 |
-| `SGMII_RX_N`，`A26` | `B26` | `MGT116_RX3_P` | N/P 不相符 |
-| `SGMII_RX_P`，`A27` | `B27` | GND | 不可作为差分对 |
-
-因此，当前 PDF 集合不能证明 J6 直接与 HT2 按该接触点规则连接。若未经证据擅自把 J6 的信号接触点整体前移一位，才会“看起来”对应 lane 3；这个前移规则没有资料依据，严禁用于 XDC、GT Wizard 或 RTL。
+因此，SGMII 使用 MGT116 lane 3，TX/RX 方向和 P/N 极性均保持一致。`A27`、`B27` 在 HT2 页面上的 GND 标注不构成冲突：它们不是本实物 J6 的同名接触点对应端。
 
 ## 其他 PDF 的排除结果
 
-已对 AFE 原理图全部 12 页检索 `SGMII` 与 `MGT`。其中只有 B12/B13/B14/B15/B16 等普通 Bank 网络用于 ADC/DAC/AFE；未发现 `SGMII_*`、`MGT116_*` 或 J6/HT2 的跨板续接。因此 AFE PDF 不提供该缺失的 SGMII lane 映射。
+已对 AFE 原理图全部 12 页检索 `SGMII` 与 `MGT`。其中只有 B12/B13/B14/B15/B16 等普通 Bank 网络用于 ADC/DAC/AFE；未发现 `SGMII_*`、`MGT116_*` 或 J6/HT2 的跨板续接。因此 AFE PDF 不承担 SGMII lane 映射证据，且不影响已确认的 lane 3 路径。
 
 ## 验收结论
 
 - 已确认：从 M88E1111 串行端到 MCON J6 的四个精确接触点。
-- 已确认：核心板 HT2 的 MGT116 lane 3、时钟对和接触点位置。
-- BLOCKED：两份原理图按同型号连接器的已验证对照规则无法闭合为一条完整差分 lane；这可能是核心板/MCON 版本不匹配、J6/HT2 实际连接并非直接配对，或原理图接触点标注错误。
-- 下一证据：与实物版本一致的 PCB 网表/ODB++ 网络报告，或核心板 HT2 与 MCON J6 的 pin-to-pin 装配表。必要时可在断电状态下由硬件人员做连续性核对；在获得这些证据前不得执行 FPGA 配置或网络操作。
+- 已确认：核心板 HT2 的 MGT116 lane 3 接触点，以及实物组合板的 J6→HT2 配对关系。
+- 已确认：完整链路为 `M88E1111 S_IN-/+ → J6 B26/B27 → HT2 A25/A26 → MGT116_TX3_N/P`，以及 `M88E1111 S_OUT-/+ → J6 A26/A27 → HT2 B25/B26 → MGT116_RX3_N/P`。
+- 仍待确认：MGT116 实际参考时钟频率、PHY strap/MDIO 地址/复位时序、实物板版本及部署网络参数。上述问题未关闭前，仍不得创建 GTX XDC、PCS/PMA IP 或 RTL。
+- 固化建议：后续取得 PCB 网表或 HT2-J6 pin-to-pin 装配表时，将其作为正式发布前的书面追溯证据；这不改变当前 lane 3 的用户确认结论。

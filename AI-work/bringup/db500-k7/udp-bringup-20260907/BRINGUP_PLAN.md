@@ -34,7 +34,7 @@
 
 - 计划：已由 `PHASE_0_1_CONTRACT_CLOSURE.md` 固化，并在执行前以提交 `08f9121` 推送至 `origin/main`。
 - 执行：协议 Word 已可读且已登记 SHA-256；确认 DB500 寄存器 UDP 端口 32000、ARP 扩展发现和三类大端载荷帧。确认 M88E1111 PHY 端 SGMII P/N、MDIO/MDC/INTN/RESETN 网络，以及 MGT116 的时钟对和 TX/RX 资源。未创建 XDC/IP/RTL，未下载、未写 MDIO、未发包。
-- 验收：BLOCKED。核心板和 MCON 原理图没有给出 SGMII 到某一 MGT116 lane 的端到端对应、GT 端极性或有效参考频率；也没有给出 PHY strap/MDIO 地址/复位时序、实物板版本或部署 MAC/IP/UDP 校验策略。详见 `PHASE_0_1_CONTRACT_CLOSURE.md` 与 `OPEN-QUESTIONS.md`。
+- 验收：BLOCKED。用户已确认 SGMII 使用 MGT116 lane 3，TX/RX 和 P/N 极性已闭合；但核心板和 MCON 原理图未给出有效参考频率，也没有给出 PHY strap/MDIO 地址/复位时序、实物板版本或部署 MAC/IP/UDP 校验策略。详见 `PHASE_0_1_CONTRACT_CLOSURE.md` 与 `OPEN-QUESTIONS.md`。
 
 ## 产品基线提升计划
 
