@@ -14,7 +14,7 @@
 
 | Bank 或资源 | 电压或参考 | 接口 | 证据 | 状态 |
 |---|---|---|---|---|
-| MGT115 与 MGT116 收发器资源 | MGT116 的四组 TX/RX 差分对和两组参考时钟对均已引至核心板连接器；用于 SGMII 的确切 lane 仍未知 | 高速板间连接器与 SGMII 候选链路 | SRC-001 第 5、10 页；SRC-002 第 4 页 | 部分确认；lane 绑定 BLOCKED |
+| MGT115 与 MGT116 收发器资源 | MGT116 的四组 TX/RX 差分对和两组参考时钟对均已引至核心板 HT2 连接器；用于 SGMII 的确切 lane 仍未知 | 高速板间连接器与 SGMII 候选链路 | SRC-001 第 5、10 页；SRC-002 第 4 页；SGMII_SIGNAL_TRACE.md | BLOCKED：J6/HT2 接触点对照存在源资料冲突 |
 | DDR3 接口 | 可见 64 位 DDR3 信号组 | 外部存储器 | SRC-001 | 部分确认；首个 UDP Demo 不选用 |
 | 用户 I/O Bank | 引脚和 VCCO 尚未核对 | GPIO、控制、AFE | 缺少 PCB 引脚导出 | 待确认 |
 
@@ -32,7 +32,7 @@
 |---|---|---|---|---|---|---|---|---|
 | JTAG | TCK、TMS、TDI、TDO | 双向链路 | FPGA JTAG 引脚 | JTAG | 由工具管理 | 不适用 | SRC-001、SRC-005 | 链已确认；约束未创建 |
 | 以太网 PHY | M88E1111 至集成 10/100/1000 RJ45 | 外部网络 | MCON 板 | PHY | 支持 1 Gbps | 以 PHY 原理图为准 | SRC-002 | 器件已确认 |
-| SGMII | M88E1111 的 S_IN+/- 接 SGMII_TX_P/N，S_OUT+/- 接 SGMII_RX_P/N；另有 MDC、MDIO、复位、中断 | PHY 端信号端接和 P/N 标识已确认；FPGA 端 GT lane、站点和端到端极性未确认 | 确切 MGT116 通道和 GPIO 站点 NOT_CONFIRMED | GTX 加 LVCMOS 管理 | SGMII 速率与参考频率 NOT_CONFIRMED | PHY 到命名网络的 P/N 已确认；GT 端极性 BLOCKED | SRC-002 第 4、9 页；SRC-001 第 5、10 页 | BLOCKED：不得创建 GTX XDC 或 PCS/PMA IP |
+| SGMII | M88E1111 的 S_IN+/- 接 SGMII_TX_P/N，S_OUT+/- 接 SGMII_RX_P/N；在 MCON J6 分别落于 B26/B27/A26/A27 | PHY 端信号端接和 P/N 标识已确认；将 J6 与核心板 HT2 的已验证连接器规则对照后不能闭合为完整 MGT lane | 确切 MGT116 通道和 GPIO 站点 NOT_CONFIRMED | GTX 加 LVCMOS 管理 | SGMII 速率与参考频率 NOT_CONFIRMED | PHY 到命名网络的 P/N 已确认；跨板 GT 端极性和 lane BLOCKED | SRC-002 第 4、9 页；SRC-001 第 5、10 页；SGMII_SIGNAL_TRACE.md | BLOCKED：存在源资料接触点冲突，不得创建 GTX XDC 或 PCS/PMA IP |
 | UDP 协议 | ARP 后基于 IPv4/UDP 的以太网载荷；寄存器读写端口为 FPGA/主机 32000 | 双向 | FPGA 报文通路 | RTL | 固定端口和 DB500 载荷格式已确认；板卡 MAC/IP 与 UDP 校验策略未指定 | 不适用 | SRC-004 第 1、2.1、2.2、2.3 节及表 3 至表 6 | 部分确认；部署网络参数 BLOCKED |
 
 未被最终 PCB 网表或等效权威资料直接确认的站点、电压、频率或差分极性，不得写入 XDC 或 IP 配置。

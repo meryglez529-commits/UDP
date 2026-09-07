@@ -14,7 +14,7 @@
 
 ## 当前结论
 
-原理图和协议资料支持开展受限 UDP bring-up 的准备。被动 JTAG 扫描已确认上电板卡通过 Digilent 目标暴露一个 xc7k325t 器件；主机以太网口已协商为 1 Gbps。协议已经确认 ARP 扩展发现、UDP 端口 32000 和寄存器帧格式；M88E1111 的 SGMII PHY 端 P/N、MDIO/MDC/RESET 网络以及 MGT116 时钟对也已定位。SGMII 实际 lane、GT 端极性、有效参考频率、PHY strap/MDIO 地址和复位时序、板卡实物版本、部署 MAC/IP 与 UDP 校验策略仍未确认；在相关契约事实确认前，任何设计或配置阶段不得宣称已就绪。
+原理图和协议资料支持开展受限 UDP bring-up 的准备。被动 JTAG 扫描已确认上电板卡通过 Digilent 目标暴露一个 xc7k325t 器件；主机以太网口已协商为 1 Gbps。协议已经确认 ARP 扩展发现、UDP 端口 32000 和寄存器帧格式；M88E1111 的 SGMII PHY 端 P/N、MDIO/MDC/RESET 网络以及 MGT116 时钟对也已定位。补充跨 PDF 追踪已经将 SGMII 追到 MCON J6 的 B26/B27/A26/A27，但与核心板 HT2 的 MGT116 接触点对照存在源资料冲突。故 SGMII 实际 lane、GT 端极性、有效参考频率、PHY strap/MDIO 地址和复位时序、板卡实物版本、部署 MAC/IP 与 UDP 校验策略仍未确认；在相关契约事实确认前，任何设计或配置阶段不得宣称已就绪。
 
 ## 必需 Demo
 
@@ -30,7 +30,7 @@
 
 | 阻塞项 | FPGA / 硬件 / 外部 | 责任方 | 下一证据 |
 |---|---|---|---|
-| 缺少 MGT116 到 SGMII 的确切通道、GT 端极性和参考频率 | FPGA / 硬件 | 板卡资料提供方 | PCB 网表导出或经审核连接器映射，以及 AD9517 输出频率配置 |
+| MGT116 到 SGMII 的跨板接触点存在资料冲突，且缺少 GT 端极性和参考频率 | FPGA / 硬件 | 板卡资料提供方 | 与实物版本一致的 PCB 网表/ODB++ 或 HT2-J6 pin-to-pin 表，以及 AD9517 输出频率配置 |
 | 缺少 PHY 地址、strap 和复位时序 | 硬件 | 板卡资料提供方 | M88E1111 数据手册、原理图 strap 网络复核和无侵入板级观测 |
 | 缺少部署 MAC/IP 和 UDP 校验策略 | 外部 | 协议/上位机责任方 | 既有上位机抓包，或书面批准的隔离 Demo 网络配置 |
 | 尚无正式源码工程 | FPGA | Bring-up 流程 | 关闭接口契约后创建 configuration-safe Demo |
