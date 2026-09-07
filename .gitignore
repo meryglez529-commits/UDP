@@ -1,0 +1,32 @@
+# Office temporary lock files are user-session state, not project sources.
+~$*
+
+# Vivado generated state. Authoritative sources live under fpga/.
+.Xil/
+.cache/
+.gen/
+.ip_user_files/
+.runs/
+.sim/
+.hw/
+*.jou
+*.log
+*.str
+*.wdb
+*.wcfg
+*.ltx
+*.bit
+*.bin
+*.dcp
+*.xsa
+webtalk*.xml
+usage_statistics_webtalk.*
+NA
+
+# AI-owned generated work is retained locally when needed, while its reviewed
+# Markdown evidence remains version-controlled.
+AI-work/**/work/*
+!AI-work/**/work/.gitkeep
+!AI-work/**/work/.artifact_start
+AI-work/**/out/*
+!AI-work/**/out/.gitkeep
