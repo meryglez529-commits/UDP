@@ -1,6 +1,12 @@
 # Office temporary lock files are user-session state, not project sources.
 ~$*
 
+# Root-level hardware and protocol references remain local inputs. Their
+# provenance is recorded in AI-work, but the binary source documents are not
+# version-controlled.
+/*.pdf
+/*.docx
+
 # Vivado generated state. Authoritative sources live under fpga/.
 .Xil/
 .cache/
