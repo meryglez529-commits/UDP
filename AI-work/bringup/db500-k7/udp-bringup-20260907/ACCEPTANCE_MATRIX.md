@@ -1,13 +1,12 @@
-# Interface acceptance matrix
+# 接口验收矩阵
 
-| Interface | Required | Demo unit | Contract | Build | Ready for board | Board result | Waiver | Release/evidence |
+| 接口 | 必需 | Demo 单元 | 契约 | 构建 | 可上板 | 板级结果 | 豁免 | 发布或证据 |
 |---|---:|---|---|---|---|---|---|---|
-| Governance and environment preflight | YES | udp-bringup-20260907 | PARTIAL | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | NONE | ACCEPTED: d5725bf on origin/main |
-| JTAG and configuration | YES | configuration-safe | PARTIAL | NOT_RUN | NO | NOT_RUN | NONE | Candidate image not created |
-| Board clocks and resets | YES | clock-reset | OPEN | NOT_RUN | NO | NOT_RUN | NONE | No qualified XDC |
-| SGMII PHY path | YES | sgmii-link | OPEN | NOT_RUN | NO | NOT_RUN | NONE | Lane and PHY facts open |
-| ARP, IPv4, UDP | YES | udp-smoke-v1 | PARTIAL | NOT_RUN | NO | NOT_RUN | NONE | Planned only |
-| DB500 protocol subset | YES | db500-protocol | PARTIAL | NOT_RUN | NO | NOT_RUN | NONE | Protocol document locked |
+| 治理与环境预检 | 是 | udp-bringup-20260907 | 部分确认 | 不适用 | 不适用 | 不适用 | 无 | 已验收：d5725bf 已在 origin/main |
+| JTAG 与配置 | 是 | configuration-safe | 部分确认 | 未运行 | 否 | 未运行 | 无 | 尚无候选镜像 |
+| 板级时钟与复位 | 是 | clock-reset | 待确认 | 未运行 | 否 | 未运行 | 无 | 尚无合格 XDC |
+| SGMII PHY 链路 | 是 | sgmii-link | 待确认 | 未运行 | 否 | 未运行 | 无 | 通道与 PHY 参数待确认 |
+| ARP、IPv4、UDP | 是 | udp-smoke-v1 | 部分确认 | 未运行 | 否 | 未运行 | 无 | 仅完成计划 |
+| DB500 协议子集 | 是 | db500-protocol | 部分确认 | 未运行 | 否 | 未运行 | 无 | 协议 Word 文件被占用 |
 
-Build evidence, link indication, and schematic review are not substitutes for a
-board result. No interface has a BOARD_PASS result in this preparation unit.
+构建证据、链路指示灯和原理图审阅均不能替代板级结果。本准备阶段没有任何接口获得 BOARD_PASS。

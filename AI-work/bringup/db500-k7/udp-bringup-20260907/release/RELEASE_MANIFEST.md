@@ -1,6 +1,6 @@
-# Release manifest
+# 发布清单
 
-No qualified release artifact exists during this preparation phase.
+本准备阶段不存在合格发布物。
 
-| Artifact | SHA-256 | Part/top | Tool/IP | Source identity | Board/constraint revision | Intended behavior | Build state | Board state | Applicable hardware | Limitations |
+| 制品 | SHA-256 | FPGA 或顶层 | 工具或 IP | 源码身份 | 板卡或约束版本 | 预期行为 | 构建状态 | 板级状态 | 适用硬件 | 限制 |
 |---|---|---|---|---|---|---|---|---|---|---|

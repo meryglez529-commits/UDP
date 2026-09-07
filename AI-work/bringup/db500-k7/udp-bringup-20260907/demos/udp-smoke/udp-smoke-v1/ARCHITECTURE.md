@@ -1,47 +1,36 @@
-# Demo architecture
+# Demo 架构
 
-## Minimal path
+## 最小通路
 
-Host test script
+上位机测试脚本
 -> RJ45
 -> M88E1111 PHY
--> SGMII serial link
--> Xilinx GTX plus SGMII PCS/PMA configuration
--> Ethernet MAC
--> ARP and IPv4/UDP receive parser
--> deterministic echo/status responder
--> UDP/IP/Ethernet transmit formatter
--> host packet capture and oracle.
+-> SGMII 串行链路
+-> Xilinx GTX 与 SGMII PCS/PMA 配置
+-> 以太网 MAC
+-> ARP 和 IPv4/UDP 接收解析器
+-> 确定性回显或状态响应器
+-> UDP/IP/以太网发送封装器
+-> 上位机抓包与判定器。
 
-The Ethernet MAC owns Ethernet FCS generation/checking. The FPGA transport
-logic validates Ethernet type, IPv4 header length, destination address, UDP
-length, and configured port; it implements the IPv4 header checksum. UDP
-checksum behavior is selected only after the protocol contract is confirmed.
+以太网 MAC 负责以太网 FCS 的生成和校验。FPGA 传输逻辑负责校验以太网类型、IPv4 首部长度、目标地址、UDP 长度和配置端口，并实现 IPv4 首部校验和。UDP 校验和策略仅在协议契约确认后决定。
 
-## Canonical dependencies
+## 规范依赖
 
-| Official path | Purpose | Shared with product? | Risk |
+| 正式路径 | 用途 | 与产品共享？ | 风险 |
 |---|---|---:|---|
-| fpga/boards/db500-k7/constraints/ | Reviewed board, GTX, PHY-management, and clock constraints | YES | High: all pins and clocks are currently open |
-| fpga/common/clock_reset/ | Reset sequencing and declared clock-domain boundaries | YES | High: physical input frequency unresolved |
-| fpga/boards/db500-k7/ip/sgmii_ethernet/ | Vendor PCS/PMA and Ethernet MAC configuration | YES | High: lane and PHY facts unresolved |
-| fpga/common/udp_transport/ | ARP/IP/UDP packet pipeline | YES | Medium: protocol settings unresolved |
-| fpga/demos/udp-smoke/ | Test-only top and host test procedure | NO | Low: excluded from product |
+| fpga/boards/db500-k7/constraints/ | 审核后的板卡、GTX、PHY 管理与时钟约束 | 是 | 高：所有引脚和时钟事实仍待确认 |
+| fpga/common/clock_reset/ | 复位时序与已声明时钟域边界 | 是 | 高：物理输入频率待确认 |
+| fpga/boards/db500-k7/ip/sgmii_ethernet/ | 厂商 PCS/PMA 与以太网 MAC 配置 | 是 | 高：通道和 PHY 事实待确认 |
+| fpga/common/udp_transport/ | ARP/IP/UDP 报文通路 | 是 | 中：协议参数待确认 |
+| fpga/demos/udp-smoke/ | 测试专用顶层和上位机测试过程 | 否 | 低：不得进入产品 |
 
-## Clock/reset/CDC and physical mapping
+## 时钟、复位、CDC 与物理映射
 
-The SGMII transceiver channel, RX/TX polarity, selected reference clock,
-management GPIO sites, and PHY reset behavior are open contract facts. The
-demo does not create an XDC, an IP configuration, or crossing logic until they
-are confirmed. The design will document each clock domain and every CDC before
-simulation or implementation.
+SGMII 收发器通道、RX/TX 极性、所选参考时钟、管理 GPIO 站点和 PHY 复位行为均为待确认契约事实。在确认前，本 Demo 不创建 XDC、IP 配置或跨时钟域逻辑。设计将在仿真或实现前记录每一个时钟域和所有 CDC。
 
-## Verification plan
+## 验证计划
 
-- Simulation: self-checking packets for ARP reply, valid UDP response, length
-  boundaries, malformed inputs, and no response to excluded commands.
-- Build: source-driven synthesis, implementation, DRC, timing, candidate image
-  identity, and versioned IP configuration.
-- Board: after explicit authorization, configure only the exact candidate
-  image, verify PHY status and SGMII lock, run a bounded host test, capture
-  packets, then return the board to the documented safe state.
+- 仿真：对 ARP 回包、有效 UDP 响应、长度边界、畸形输入以及对排除命令的不响应进行自检。
+- 构建：执行源码驱动的综合、实现、DRC、时序、候选镜像身份和已版本化 IP 配置检查。
+- 板级：获得明确授权后，仅下载精确候选镜像；验证 PHY 状态和 SGMII 锁定；执行受限上位机测试并抓包；最终将板卡恢复到已记录的安全状态。

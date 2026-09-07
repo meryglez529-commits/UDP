@@ -1,17 +1,11 @@
-# Bring-up evidence and process records
+# Bring-up 证据与过程记录
 
-Every FPGA work item uses the following state transition:
+每一项 FPGA 工作必须遵循以下状态转换：
 
-1. Plan: define the decision question, scope, safe defaults, acceptance
-   criteria, dependencies, and authorization boundary before execution.
-2. Execute: record the exact command or board procedure, tool version, inputs,
-   outputs, and observed result.
-3. Accept: compare the recorded result against the predeclared criterion; mark
-   the item accepted, failed, blocked, or pending without substituting a build
-   result for a board result.
+1. 计划：在执行前定义决策问题、范围、安全默认值、验收标准、依赖关系与授权边界。
+2. 执行：记录准确的命令或板级操作、工具版本、输入、输出与观测结果。
+3. 验收：将结果与预先定义的标准比对，明确记录接受、失败、阻塞或待定；构建成功不能替代板卡验证成功。
 
-Each accepted stage is committed to Git. Generated artifacts are ignored unless
-they are explicitly released; reviewed Markdown records remain tracked.
+每个完成验收的阶段都必须提交到 Git。除正式发布物外，生成文件均不纳入版本库；经审核的 Markdown 记录必须持续受版本控制。
 
-The active unit is
-bringup/db500-k7/udp-bringup-20260907/.
+当前工作单元为 bringup/db500-k7/udp-bringup-20260907/。

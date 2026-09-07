@@ -1,43 +1,33 @@
-# Demo requirements
+# Demo 需求
 
-- Demo: udp-smoke-v1
-- Interface: ARP, IPv4, UDP reply over SGMII Ethernet
-- Required by: INTERFACE_MATRIX.md ARP, IPv4, UDP row
-- Question answered: Can the FPGA return a validated UDP response to a host
-  over the board's intended 1 Gbps Ethernet path without enabling acquisition
-  or motion behavior?
-- Official source root: fpga/
-- Target board/revision: DB500 K7 control-platform stack / NOT_CONFIRMED
+- Demo：udp-smoke-v1
+- 接口：基于 SGMII 以太网的 ARP、IPv4 与 UDP 回包
+- 需求来源：INTERFACE_MATRIX.md 中的 ARP、IPv4、UDP 行
+- 需回答的问题：FPGA 能否通过板卡预期的 1 Gbps 以太网通路，向主机返回经校验的 UDP 响应，同时不启用采集或运动行为？
+- 正式源码根目录：fpga/
+- 目标板卡或版本：DB500 K7 控制平台组合板 / NOT_CONFIRMED
 
-## Plan
+## 计划
 
-The minimal board behavior is:
+最小板级行为如下：
 
-1. Respond only to ARP for the configured demo IPv4 address.
-2. Accept only unfragmented IPv4 UDP packets for the configured destination
-   port and local MAC/IP pair.
-3. Return a deterministic UDP echo or read-only status payload.
-4. Drop malformed, unsupported, broadcast UDP, and every DB500 control,
-   acquisition, image-upload, or upgrade command.
+1. 仅回应发往已配置 Demo IPv4 地址的 ARP 请求。
+2. 仅接收发往已配置本地 MAC/IP 且目的端口匹配的、未分片 IPv4 UDP 报文。
+3. 返回确定性的 UDP 回显或只读状态载荷。
+4. 丢弃格式错误、不支持、广播 UDP 以及所有 DB500 控制、采集、图像上传或升级命令。
 
-The host address observed during preflight is 192.168.1.10/24. The board MAC,
-board IP, and UDP port must be taken from the unlocked protocol specification
-or an explicitly approved isolated-demo configuration; they are not guessed.
+预检中观测到的主机地址为 192.168.1.10/24。板卡 MAC、IP 和 UDP 端口必须来自解除锁定后的协议规范，或来自已明确批准的隔离 Demo 配置，不得猜测。
 
-## Acceptance
+## 验收
 
-| Stage | Criterion | Evidence |
+| 阶段 | 标准 | 证据 |
 |---|---|---|
-| Plan | Scope, safe defaults, dependent contract facts, and no-side-effect behavior are documented before source work. | This file and ARCHITECTURE.md |
-| Contract | Exact SGMII lane/polarity/reference clock, PHY control parameters, and network settings are confirmed. | BOARD_CONTRACT.md updated with authoritative evidence |
-| Simulation | Self-checking tests cover valid ARP and UDP, malformed frame rejection, and deterministic response payload. | Simulation transcript, wave database, and test result |
-| Build | Source-driven Vivado run meets timing for every declared clock and emits a candidate bitstream tied to Git revision. | Synth/implementation/timing reports and candidate hash |
-| Board | Host resolves ARP and receives the expected UDP reply; packet capture shows correct Ethernet, IPv4, UDP, and payload fields. | Host test log and packet capture summary |
+| 计划 | 在源码工作前，已记录范围、安全默认行为和依赖的契约事实。 | 本文件与 ARCHITECTURE.md |
+| 契约 | 确切 SGMII 通道、极性、参考时钟、PHY 控制参数和网络设置均已确认。 | BOARD_CONTRACT.md 中更新的权威证据 |
+| 仿真 | 自检测试覆盖有效 ARP、UDP、畸形帧拒绝与确定性回包。 | 仿真日志、波形数据库和测试结论 |
+| 构建 | 源码驱动的 Vivado 构建满足所有声明时钟的时序，并生成与 Git 版本绑定的候选 bitstream。 | 综合、实现、时序报告和候选镜像哈希 |
+| 板级 | 主机完成 ARP 解析并收到预期 UDP 回包；抓包显示正确以太网、IPv4、UDP 和载荷字段。 | 上位机测试日志和抓包摘要 |
 
-## Scope and safe behavior
+## 范围与安全行为
 
-Included interfaces are JTAG/configuration, selected board clocks/resets,
-M88E1111 management, one SGMII Ethernet link, and the minimal Ethernet/IP/UDP
-pipeline. DDR3, ADC/DAC, AFE controls, scanning, motion, image upload, remote
-upgrade, and real hardware register writes are excluded. All externally visible
-controls remain inactive until a separately accepted phase authorizes them.
+包含 JTAG 或配置、所选板级时钟或复位、M88E1111 管理、一个 SGMII 以太网链路，以及最小以太网/IP/UDP 流水线。DDR3、ADC/DAC、AFE 控制、扫描、运动、图像上传、远程升级和真实硬件寄存器写入均不在范围内。所有外部可见控制在另行批准的阶段前必须保持不活动。

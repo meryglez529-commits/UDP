@@ -1,14 +1,13 @@
-# Interface matrix
+# 接口矩阵
 
-| Interface | Purpose | Required | Contract state | Minimum demo | Acceptance evidence | Current state |
+| 接口 | 目的 | 必需 | 契约状态 | 最小 Demo | 验收证据 | 当前状态 |
 |---|---|---:|---|---|---|---|
-| JTAG and configuration | Establish safe, repeatable FPGA image loading | YES | PARTIAL | configuration-safe | JTAG target identity, generated bitstream, verified safe board behavior | PLANNED |
-| Board clocks and resets | Provide deterministic logic startup | YES | OPEN | clock-reset | Reviewed XDC and timing report; reset behavior observed | PLANNED |
-| SGMII PHY path | Connect M88E1111 through GTX to Ethernet MAC | YES | OPEN | sgmii-link | Link status, MDIO readback, SGMII/PCS lock | PLANNED |
-| ARP, IPv4, UDP | Provide interoperable packet transport | YES | PARTIAL | udp-smoke | Host ARP resolution and checked UDP request/reply capture | PLANNED |
-| DB500 protocol subset | Exercise the custom command framing safely | YES | PARTIAL | db500-protocol | Device information and read-only register response match the specification | PLANNED |
-| DDR3 | Future buffering and acquisition data path | NO for first demo | PARTIAL | NOT_SELECTED | Explicitly excluded from UDP smoke scope | NOT_APPLICABLE |
-| ADC/DAC AFE | Future scanning and acquisition behavior | NO for first demo | PARTIAL | NOT_SELECTED | Explicitly excluded from UDP smoke scope | NOT_APPLICABLE |
+| JTAG 与配置 | 建立安全、可重复的 FPGA 镜像下载能力 | 是 | 部分确认 | configuration-safe | JTAG 目标身份、生成的 bitstream、安全板级行为 | PLANNED |
+| 板级时钟与复位 | 提供确定性的逻辑启动条件 | 是 | 待确认 | clock-reset | 审核后的 XDC、时序报告和复位观测 | PLANNED |
+| SGMII PHY 链路 | 通过 GTX 将 M88E1111 接入以太网 MAC | 是 | 待确认 | sgmii-link | 链路状态、MDIO 读回、SGMII/PCS 锁定 | PLANNED |
+| ARP、IPv4、UDP | 提供可互通的数据报传输 | 是 | 部分确认 | udp-smoke | 主机 ARP 解析和经校验的 UDP 请求或回包抓包 | PLANNED |
+| DB500 协议子集 | 安全验证自定义命令帧 | 是 | 部分确认 | db500-protocol | 设备信息和只读寄存器响应符合规范 | PLANNED |
+| DDR3 | 未来缓存和采集数据通路 | 首版不需要 | 部分确认 | NOT_SELECTED | 明确排除在 UDP Smoke 范围外 | NOT_APPLICABLE |
+| ADC/DAC AFE | 未来扫描和采集功能 | 首版不需要 | 部分确认 | NOT_SELECTED | 明确排除在 UDP Smoke 范围外 | NOT_APPLICABLE |
 
-Every required interface has an assigned demo. Interfaces not selected for the
-first UDP demo are neither implicitly validated nor available to product logic.
+每项必需接口均已分配 Demo。首版未选择的接口既未被隐式验证，也不得被产品逻辑使用。

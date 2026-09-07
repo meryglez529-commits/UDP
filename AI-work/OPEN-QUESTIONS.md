@@ -1,9 +1,9 @@
-# Open questions
+# 待确认问题
 
-| ID | Question | Why it matters | Owner / next evidence | State |
+| 编号 | 问题 | 影响 | 责任人或下一证据 | 状态 |
 |---|---|---|---|---|
-| OQ-001 | What is the assembled board revision and which core/MCON/AFE revisions are fitted? | Constraints and acceptance apply to a specific hardware revision. | Confirm board markings and BOM/PCB revision. | OPEN |
-| OQ-002 | Which exact MGT116 TX/RX lane, polarity, and reference-clock input connect to the M88E1111 SGMII port? | Required before creating the GTX constraints and PCS/PMA configuration. | PCB net export or reviewed connector pin map. | OPEN |
-| OQ-003 | What are the M88E1111 strap settings, MDIO address, reset timing, and reference-clock frequency? | Required to configure and verify the PHY safely. | PHY sheet plus M88E1111 data sheet and board observation. | OPEN |
-| OQ-004 | What MAC address, board IP address, UDP port, and packet checksum policy are required by the deployed DB500 protocol? | Required for an interoperable host and FPGA demo. | Read the protocol document after its Word lock is released; reconcile with packet capture if needed. | OPEN |
-| OQ-005 | What is the exact Xilinx IP configuration and license availability for SGMII plus Ethernet MAC in Vivado 2021.1? | Determines the reproducible implementation path. | Create configuration only after OQ-002 and OQ-003 are closed. | OPEN |
+| OQ-001 | 实际装配板卡的版本，以及 CORE、MCON、AFE 的具体版本是什么？ | 约束和验收必须对应明确硬件版本。 | 确认板卡丝印、BOM 或 PCB 版本。 | 待确认 |
+| OQ-002 | M88E1111 的 SGMII 端口实际连接到哪一路 MGT116 TX/RX、差分极性和参考时钟？ | 创建 GTX 约束和 PCS/PMA 配置前必须明确。 | 获取 PCB 网表导出或经审核的连接器引脚表。 | 待确认 |
+| OQ-003 | M88E1111 的 strap 配置、MDIO 地址、复位时序和参考时钟频率是什么？ | 安全配置和验证 PHY 所必需。 | 结合 PHY 原理图、M88E1111 数据手册和板上观测确认。 | 待确认 |
+| OQ-004 | 已部署 DB500 协议使用的 MAC、板卡 IP、UDP 端口和校验策略是什么？ | 与现有上位机互通所必需。 | Word 文件解除锁定后精读协议；必要时与抓包结果核对。 | 待确认 |
+| OQ-005 | Vivado 2021.1 中 SGMII 和以太网 MAC 所需 IP 的具体配置及许可状态是什么？ | 决定可复现的实现方案。 | 在 OQ-002 与 OQ-003 关闭后再创建 IP 配置。 | 待确认 |

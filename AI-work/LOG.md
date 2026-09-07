@@ -1,7 +1,8 @@
-# Project log
+# 项目日志
 
-| Date | Unit | Event | Result |
+| 日期 | 工作单元 | 事件 | 结果 |
 |---|---|---|---|
-| 2026-09-07 | udp-bringup-20260907 | Established formal Plan, Execute, Accept workflow and Git repository boundary. | EXECUTED |
-| 2026-09-07 | udp-bringup-20260907 | Read-only Vivado 2021.1 JTAG scan found one Digilent target and one xc7k325t device. No image was programmed. | EXECUTED |
-| 2026-09-07 | udp-bringup-20260907 | Pushed initial repository, source register, board contract, matrices, and UDP Smoke plan to origin/main at d5725bf. | ACCEPTED |
+| 2026-09-07 | udp-bringup-20260907 | 建立计划、执行、验收流程及 Git 仓库边界。 | 已执行 |
+| 2026-09-07 | udp-bringup-20260907 | 以只读方式扫描 Vivado 2021.1 JTAG 链，发现一个 Digilent 目标和一个 xc7k325t 器件；未下载镜像。 | 已执行 |
+| 2026-09-07 | udp-bringup-20260907 | 将初始仓库、输入登记、板卡契约、矩阵和 UDP Smoke 计划推送至 origin/main，提交为 d5725bf。 | 已验收 |
+| 2026-09-07 | udp-bringup-20260907 | 将仓库说明、工作包和 UDP Demo 计划中文化，并通过工作包结构校验后提交至 Git。 | 已验收 |

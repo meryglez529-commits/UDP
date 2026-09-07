@@ -1,28 +1,28 @@
-# Demo status
+# Demo 状态
+
+以下 State 行为校验器读取的机器字段，状态码保持英文。
 
 - State: PLANNED
-- Demo: udp-smoke-v1
-- Interface: ARP, IPv4, UDP reply over the M88E1111 SGMII link
-- Official source path: fpga/demos/udp-smoke/
-- Top / part: NOT_CREATED / XC7K325T-2FFG676I
-- Tool/version: Vivado 2021.1
-- Candidate image: NONE
-- Qualified image: NONE
+- Demo：udp-smoke-v1
+- 接口：通过 M88E1111 SGMII 链路实现 ARP、IPv4 与 UDP 回包
+- 正式源码路径：fpga/demos/udp-smoke/
+- 顶层 / FPGA：NOT_CREATED / XC7K325T-2FFG676I
+- 工具 / 版本：Vivado 2021.1
+- 候选镜像：NONE
+- 合格镜像：NONE
 
-## Stage evidence
+## 阶段证据
 
-| Stage | State | Command/procedure | Evidence | Conclusion |
+| 阶段 | 状态 | 命令或过程 | 证据 | 结论 |
 |---|---|---|---|---|
-| Plan | ACCEPTED | REQUIREMENTS.md and ARCHITECTURE.md | This planned unit | Scope limited to safe ARP/UDP reply |
-| Contract | OPEN | Reconcile SGMII lane, clock, PHY control, MAC/IP/port | BOARD_CONTRACT.md and OQ-002 through OQ-005 | No implementation permitted |
-| Simulation | NOT_RUN | Future self-checking Ethernet packet testbench | NONE | NOT_RUN |
-| Synthesis | NOT_RUN | Future source-driven Vivado build | NONE | NOT_RUN |
-| Implementation | NOT_RUN | Future source-driven Vivado build | NONE | NOT_RUN |
-| Bitstream | NOT_RUN | Candidate image only after build acceptance | NONE | NOT_RUN |
-| Board | NOT_RUN | Authorized direct-link host procedure and packet capture | NONE | NOT_RUN |
+| 计划 | ACCEPTED | REQUIREMENTS.md 与 ARCHITECTURE.md | 当前计划单元 | 范围限制为安全的 ARP/UDP 回包 |
+| 契约 | OPEN | 核对 SGMII 通道、时钟、PHY 控制、MAC/IP/端口 | BOARD_CONTRACT.md 与 OQ-002 至 OQ-005 | 不允许实现 |
+| 仿真 | NOT_RUN | 后续自检以太网报文测试平台 | NONE | NOT_RUN |
+| 综合 | NOT_RUN | 后续源码驱动的 Vivado 构建 | NONE | NOT_RUN |
+| 实现 | NOT_RUN | 后续源码驱动的 Vivado 构建 | NONE | NOT_RUN |
+| bitstream | NOT_RUN | 仅在构建验收后生成候选镜像 | NONE | NOT_RUN |
+| 板级 | NOT_RUN | 经过授权的直连主机过程和抓包 | NONE | NOT_RUN |
 
-## Current conclusion and next gate
+## 当前结论与下一关卡
 
-The demo has an accepted scope but no closed physical contract. Its next gate
-is a reviewed MGT116/SGMII lane and reference-clock mapping, followed by an
-explicit authorization to create source and test the board.
+Demo 范围已验收，但物理契约尚未关闭。下一关卡是审核 MGT116/SGMII 通道和参考时钟映射，随后取得创建源码和测试板卡的明确授权。
