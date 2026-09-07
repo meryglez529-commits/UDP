@@ -9,7 +9,7 @@
 | 顺序 | 阶段或 Demo | 计划：问题与安全行为 | 执行：受限工作 | 验收：所需证据与关卡 | 状态 |
 |---:|---|---|---|---|---|
 | 0 | 治理与环境预检 | 建立职责边界、输入来源、工具链、Git 远端、物理链路和被动 JTAG 身份；不得下载镜像或发包。 | 初始化 Git、登记输入资料、枚举主机网络和 JTAG 链。 | 文档已提交并推送；扫描识别出预期 FPGA 且未改变板卡状态。 | ACCEPTED |
-| 0.1 | SGMII/PHY 硬件契约闭合 | 能否用权威资料确认 MGT116 通道、差分极性、参考时钟、PHY strap/MDIO/复位和 Demo 网络参数？不得创建 XDC、IP 或主动发包。 | 审阅核心板与 MCON 的板间连接映射、PHY 数据手册、板卡版本和解除锁定后的协议文档；仅做必要的只读硬件观测。 | 每项事实均标记为“已确认”或明确阻塞；未确认项不得进入 XDC/IP。 | PLANNED |
+| 0.1 | SGMII/PHY 硬件契约闭合 | 能否用权威资料确认 MGT116 通道、差分极性、参考时钟、PHY strap/MDIO/复位和 Demo 网络参数？不得创建 XDC、IP 或主动发包。 | 已只读审阅核心板/MCON 原理图和已解除占用的协议文档；未做任何主动硬件或网络操作。 | 每项事实均标记为“已确认”或明确阻塞；未确认项不得进入 XDC/IP。 | BLOCKED |
 | 1 | configuration-safe | 能否构建并安全配置最小镜像？所有非必要输出必须保持安全。 | 契约关闭后，创建规范工程 Tcl、基础 XDC、时钟复位逻辑和安全 GPIO Demo。 | 适用时完成自检仿真、实现与时序证据、精确候选镜像身份和明确板级观测。 | PLANNED |
 | 2 | clock-reset | 实际板级时钟和复位能否以声明频率工作？外部接口保持不活动。 | 将审核后的时钟约束和复位时序写入共享板级层。 | 所有声明时钟满足时序，板级观测证实复位退出确定。 | PLANNED |
 | 3 | sgmii-link | FPGA 与 M88E1111 能否建立并维持预期以太网链路？不得执行协议命令。 | 仅在通道、极性和时钟事实确认后，配置 PHY 管理接口、SGMII PCS/PMA 和 MAC。 | 记录 MDIO 身份或状态、PCS 锁定、链路状态与错误计数。 | PLANNED |
@@ -29,6 +29,12 @@
 - 标准：过程记录、输入登记、板卡契约、矩阵、计划与首个 UDP Demo 计划已提交并可在 origin/main 查看。
 - 结论：ACCEPTED
 - 证据：Git 提交 d5725bf，说明为 chore: establish UDP FPGA bring-up workflow，已于 2026-09-07 推送至 origin/main。该提交记录了环境预检；根据后续用户范围调整，根目录的 Word/PDF 输入资料仅保留本地且不再由当前分支跟踪，过程记录继续保留在 Git。
+
+## 阶段 0.1 执行与验收记录
+
+- 计划：已由 `PHASE_0_1_CONTRACT_CLOSURE.md` 固化，并在执行前以提交 `08f9121` 推送至 `origin/main`。
+- 执行：协议 Word 已可读且已登记 SHA-256；确认 DB500 寄存器 UDP 端口 32000、ARP 扩展发现和三类大端载荷帧。确认 M88E1111 PHY 端 SGMII P/N、MDIO/MDC/INTN/RESETN 网络，以及 MGT116 的时钟对和 TX/RX 资源。未创建 XDC/IP/RTL，未下载、未写 MDIO、未发包。
+- 验收：BLOCKED。核心板和 MCON 原理图没有给出 SGMII 到某一 MGT116 lane 的端到端对应、GT 端极性或有效参考频率；也没有给出 PHY strap/MDIO 地址/复位时序、实物板版本或部署 MAC/IP/UDP 校验策略。详见 `PHASE_0_1_CONTRACT_CLOSURE.md` 与 `OPEN-QUESTIONS.md`。
 
 ## 产品基线提升计划
 
