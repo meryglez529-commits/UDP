@@ -1,160 +1,109 @@
 # 硬件环境总表
 
-此文件是本项目的全局硬件事实来源。后续工作包只能从这里提取与需求相关的接口事实；若资料不足，应先针对该接口回溯原理图并更新本文件，不能以网络名推断 XDC、电压、时钟频率或 IP 参数。
+状态：`HARDWARE_ENVIRONMENT_REWORK_IN_PROGRESS`
 
-状态定义：`已确认` 表示原理图或用户明确确认；`待确认` 表示后续开发前需要补齐；`推断` 表示由连接关系得出的工程判断，不能直接作为实现参数。
+本文件是后续工作包的唯一全局硬件事实来源。2026-09-07 的首版采用 PDF 扁平文本抽取，无法可靠表示连接器两侧和跨板端到端关系，因此不再作为 XDC、IP 参数或板级操作的依据。本版按“Bank 电源 → 单信号映射 → 功能路径”的顺序重建；只有表中明确标为“可用于开发”的行才可被工作包引用。
 
-## 项目身份
+状态含义：
 
-| 项目 | 值 | 来源或状态 |
+- `已确认（可用于开发）`：所需连接、电源和电气事实均能回溯到明确资料页。
+- `核心板内已确认，跨板待确认`：FPGA 到核心板连接器已闭合，但尚未闭合到子板/器件。
+- `待确认`：不得用于 XDC、IP 参数或板级动作。
+- `用户确认`：用户提供的事实；仍须在表中写出适用范围。
+
+## 1. 项目身份与资料
+
+| 项目 | 值 | 来源与状态 |
 |---|---|---|
-| 项目路径 | `D:\\MyFPGAProject\\UDP` | 已确认 |
+| 项目路径 | `D:\MyFPGAProject\UDP` | 已确认 |
 | Git 远程 | `git@github.com:meryglez529-commits/UDP.git` | 已确认 |
-| 核心板 | MK7XCORE676（原理图文件标注日期 2019-06-14） | 已确认 |
-| FPGA | Xilinx Kintex-7 `XC7K325T-2FFG676I` | Core 原理图，已确认 |
-| 目标工具链 | Vivado 2021.1 | 用户指定，已确认 |
-| JTAG | 板卡已上电，JTAG 已连接；历史会话曾被动枚举到一个 Digilent 目标和一个 `xc7k325t`，本次未重新扫描 | 用户陈述 / 历史被动观测，待本需求授权后复核 |
-| 配置接口 | FPGA 配置相关网络：`PROG`、`PUDC0B`、`FLASH0CLK`、`FLASH0IO[3:0]`、`FLASH0nCS` | Core 原理图第 2、4 页，已确认 |
+| FPGA 核心板 | MK7XCORE676，图纸日期 2019-06-14 | SRC-001，已确认 |
+| FPGA | Xilinx Kintex-7 `XC7K325T-2FFG676I` | SRC-001 第 2、6 页，已确认 |
+| 工具链 | Vivado 2021.1 | 用户指定，已确认 |
+| 当前 JTAG 观测 | 已上电且 JTAG 已连接；只读枚举见一个 Digilent 目标和唯一 `xc7k325t_0` | 用户陈述 + `led-download-check` 日志，已确认；这不证明下载或 LED 行为 |
 
-## 输入资料
-
-| 编号 | 文件 | 版本/日期 | 适用范围 | 页数或页码 | SHA-256 | 状态 |
-|---|---|---|---|---|---|---|
-| SRC-001 | `MK7XCORE676 20190614.pdf` | 2019-06-14 | 核心板、FPGA、DDR3、QSPI、GT、HT 连接器 | 10 页；本表主要使用第 2-6、10 页 | `FC5AC7FEF237C4F0BB9DB24D1A23168A4D3D06B16DF8DF481C729EC4276C13FB` | 已确认 |
-| SRC-002 | `sem-sgsc2450-mcon_v1_3_2021-9-2(1).pdf` | v1.3 / 2021-09-02 | MCON 板、J6、M88E1111、JTAG | 11 页；本表主要使用第 4、9 页 | `6907B4EB59EF93496C5089E01728EEACEC5F187277A8971088201137FDDE5772` | 已确认 |
-| SRC-003 | `sem-scsg2450-afea-v10(2).pdf` | v1.0 | AFE 板及板间连接资料 | 12 页 | `EB79E07E5B901887AB75EEBE46A5B01162658CA171A37383D2964BB0E2021166` | 已确认；本次未逐页建立 AFE 全量网表 |
-| SRC-004 | `DB500千兆网版通讯协议V1.4_20250113.docx` | V1.4 / 2025-01-13 | 后续 UDP 协议工作包的协议依据 | DOCX | `33CC82847B3576AD432168390BA50987C5AF343513DCC110BC746DBBB3F902CF` | 已确认；本次未据此实现 |
-| SRC-005 | 用户明确确认的 SGMII 跨板对应 | 2026-09-07 | SGMII 差分路径、lane、极性与方向 | 见“SGMII 路径” | 不适用 | 已确认 |
-
-## FPGA 管脚与原理图映射
-
-以下是从 SRC-001 第 2-6 页文本抽取的 **401 个**连接到 FPGA 的、约束相关的一一映射。电源、地及未与 FPGA 信号相连的元件不计入。每个 `FPGA ball → 原理图网络` 对是独立映射；不得据此自动生成 XDC，必须在后续工作包补齐具体外设、Bank VCCO、IOSTANDARD、时序和方向。
-
-| FPGA 管脚、Bank 或专用站点 | 原理图网络 | 连接器/器件/功能 | 方向与电气属性 | 来源页码 | 状态 |
+| 编号 | 文件 | 版本/日期 | 已视觉核对的页 | 哈希 SHA-256 | 用途与状态 |
 |---|---|---|---|---|---|
-| FFG676 普通 IO（Bank 12/13/14/15/16） | `B120*`、`B130*`、`B140*`、`B150*`、`B160*` | 核心板通用 IO；外部功能需按具体需求跨页追踪 | 信号方向、VCCO、IOSTANDARD 待定；`P/N` 为原理图网络极性 | SRC-001 第 2 页 | 引脚-网络已确认；电气参数待确认 |
-| FFG676 普通 IO / 配置专用脚 | `FLASH0*`、`PUDC0B`、`PROG`、`VCC3V3`、`XADC0*` | QSPI/配置/XADC | 见“时钟、复位与配置” | SRC-001 第 2、4 页 | 已确认 |
-| FFG676 普通 IO（DDR3 所在 Bank，具体 Bank 以后续 MIG 规划为准） | `DDR0*`、`sys0clk0i` | DDR3 存储器与系统时钟 | DDR3 走线、电压、MIG 参数及时钟频率待确认 | SRC-001 第 3 页 | 引脚-网络已确认；参数待确认 |
-| MGT115 / MGT116 专用 GT 站点 | `MGT115*`、`MGT116*` | 多千兆收发器通道与 GT 参考时钟 | 专用 GT 差分资源；协议、速率、参考时钟频率待确认 | SRC-001 第 5 页 | 引脚-网络已确认 |
-| 专用辅助资源 | `MGTAUX`、`VCC1V8` | MGT 辅助 / 电源关系 | 非普通 XDC IO | SRC-001 第 6 页 | 已确认 |
+| SRC-001 | `D:\MyFPGAProject\UDP\MK7XCORE676 20190614.pdf` | 2019-06-14 | 第 2、4、5、6、10 页 | `FC5AC7FEF237C4F0BB9DB24D1A23168A4D3D06B16DF8DF481C729EC4276C13FB` | 核心板 FPGA、Bank、配置、GT、HT 连接器；进行中 |
+| SRC-002 | `D:\MyFPGAProject\UDP\sem-sgsc2450-mcon_v1_3_2021-9-2(1).pdf` | v1.3 / 2021-09-02 | 第 1、4、9 页 | `6907B4EB59EF93496C5089E01728EEACEC5F187277A8971088201137FDDE5772` | MCON、J6/J7、LED、PHY；进行中 |
+| SRC-003 | `D:\MyFPGAProject\UDP\sem-scsg2450-afea-v10(2).pdf` | v1.0 | 尚未逐页核对 | `EB79E07E5B901887AB75EEBE46A5B01162658CA171A37383D2964BB0E2021166` | AFE 跨板路径，待确认 |
+| SRC-004 | `D:\MyFPGAProject\UDP\DB500千兆网版通讯协议V1.4_20250113.docx` | V1.4 / 2025-01-13 | 不适用 | `33CC82847B3576AD432168390BA50987C5AF343513DCC110BC746DBBB3F902CF` | 后续 UDP 协议工作包；本环境不据此推导硬件 |
+| SRC-005 | 用户对 MCON J6 SGMII 管脚的更正 | 2026-09-07 | 不适用 | 不适用 | TX：B26/B27；RX：A26/A27，用户确认 |
+| SRC-006 | 用户提供的 `sys_clk_i` 原理图截图 | 2026-09-08 | AA3 与 `IO_L12P_T1_MRCC_34` 的连线 | 不适用 | 明确确认 `sys_clk_i → AA3 → IO_L12P_T1_MRCC_34`；用于本工作包 ILA 时钟约束 |
 
-### Core 原理图第 2 页 - Bank 12/13/14/15/16、QSPI
+## 2. Bank 与专用电源
 
-```text
-V22→B120L10N；U22→B120L10P；U25→B120L20N；U24→B120L20P；V24→B120L30N；V23→B120L30P；V26→B120L40N；U26→B120L40P；W26→B120L50N；W25→B120L50P；W21→B120L60N；V21→B120L60P
-AB25→B120L70N；AA25→B120L70P；W24→B120L80N；W23→B120L80P；AC26→B120L90N；AB26→B120L90P；Y26→B120L100N；Y25→B120L100P；AB24→B120L110N；AA23→B120L110P；AA24→B120L120N；Y23→B120L120P
-AA22→B120L130N；Y22→B120L130P；AC24→B120L140N；AC23→B120L140P；Y21→B120L150N；W20→B120L150P；AD24→B120L160N；AD23→B120L160P；AC22→B120L170N；AB22→B120L170P；AC21→B120L180N；AB21→B120L180P
-AE21→B120L190N；AD21→B120L190P；AF25→B120L200N；AF24→B120L200P；AE26→B120L210N；AD26→B120L210P；AF23→B120L220N；AE23→B120L220P；AE25→B120L230N；AD25→B120L230P；AF22→B120L240N；AE22→B120L240P
-K26→B130L10N；K25→B130L10P；P26→B130L20N；R26→B130L20P；L25→B130L30N；M25→B130L30P；N24→B130L40N；P24→B130L40P；M26→B130L50N；N26→B130L50P；P25→B130L60N；R25→B130L60P
-M20→B130L70N；N19→B130L70P；L24→B130L80N；M24→B130L80P；P20→B130L90N；P19→B130L90P；M22→B130L100N；M21→B130L100P；N23→B130L110N；P23→B130L110P；N22→B130L120N；N21→B130L120P
-P21→B130L130N；R21→B130L130P；R23→B130L140N；R22→B130L140P；T25→B130L150N；T24→B130L150P；R20→B130L160N；T20→B130L160P；T23→B130L170N；T22→B130L170P；U20→B130L180N；U19→B130L180P
-T19→B130L190N；T18→B130L190P；N17→B130L200N；P16→B130L200P；R17→B130L210N；R16→B130L210P；M19→B130L220N；N18→B130L220P；T17→B130L230N；U17→B130L230P；P18→B130L240N；R18→B130L240P
-A24→B140L40N；A23→B140L40P；C26→B140L50N；D26→B140L50P；C22→B140L70N；D21→B140L70P；A20→B140L80N；B20→B140L80P；E22→B140L90N；E21→B140L90P；B21→B140L100N；C21→B140L100P
-D24→B140L110N；D23→B140L110P；E23→B140L120N；F22→B140L120P；F23→B140L130N；G22→B140L130P；F24→B140L140N；G24→B140L140P；D25→B140L150N；E25→B140L150P；G26→B140L160N；G25→B140L160P
-E26→B140L170N；F25→B140L170P；H26→B140L180N；J26→B140L180P；G21→B140L190N；H21→B140L190P；H24→B140L200N；H23→B140L200P；H22→B140L210N；J21→B140L210P；J25→B140L220N；J24→B140L220P
-K22→B140L230N；L22→B140L230P；J23→B140L240N；K23→B140L240P；B16→B150L10N；C16→B150L10P；A19→B150L20N；A18→B150L20P；A17→B150L30N；B17→B150L30P；B19→B150L40N；C19→B150L40P
-C18→B150L50N；C17→B150L50P；D16→B150L60N；D15→B150L60P；G16→B150L70N；H16→B150L70P；F15→B150L80N；G15→B150L80P；J16→B150L90N；J15→B150L90P；E16→B150L100N；E15→B150L100P
-F18→B150L110N；G17→B150L110P；E17→B150L120N；F17→B150L120P；D18→B150L130N；E18→B150L130P；H18→B150L140N；H17→B150L140P；D20→B150L150N；D19→B150L150P；F20→B150L160N；G19→B150L160P
-E20→B150L170N；F19→B150L170P；G20→B150L180N；H19→B150L180P；J20→B150L190N；K20→B150L190P；J19→B150L200N；J18→B150L200P；L20→B150L210N；L19→B150L210P；K17→B150L220N；K16→B150L220P
-L18→B150L230N；M17→B150L230P；K18→B150L240N；L17→B150L240P；H8→B160L10N；H9→B160L10P；G9→B160L20N；G10→B160L20P；H13→B160L30N；J13→B160L30P；J10→B160L40N；J11→B160L40P
-G14→B160L50N；H14→B160L50P；H11→B160L60N；H12→B160L60P；F8→B160L70N；F9→B160L70P；D8→B160L80N；D9→B160L80P；A8→B160L90N；A9→B160L90P；B9→B160L100N；C9→B160L100P
-F10→B160L110N；G11→B160L110P；D10→B160L120N；E10→B160L120P；C11→B160L130N；C12→B160L130P；D11→B160L140N；E11→B160L140P；F13→B160L150N；F14→B160L150P；F12→B160L160N；G12→B160L160P
-D13→B160L170N；D14→B160L170P；E12→B160L180N；E13→B160L180P；C13→B160L190N；C14→B160L190P；B11→B160L200N；B12→B160L200P；A14→B160L210N；B14→B160L210P；A10→B160L220N；B10→B160L220P
-A15→B160L230N；B15→B160L230P；A12→B160L240N；A13→B160L240P；B24→FLASH0IO0；A25→FLASH0IO1；B22→FLASH0IO2；A22→FLASH0IO3；C23→FLASH0nCS；B25→PUDC0B
-```
+电源网名和实际电压分列；`VADJ1/VADJ2` 的实际电压尚未由本次资料闭合。只有 Bank 0、15 的具体开发用途已完成电压确认。
 
-### Core 原理图第 3 页 - DDR3 与系统时钟
+| Bank / 资源 | 专用供电脚与电源网 | 已确认电压 | 允许 IOSTANDARD | 来源 | 状态 |
+|---|---|---|---|---|---|
+| Configuration Bank 0 | `VCCO_0`：T6/L7 → `VCC3V3`；`CFGBVS_0`：P7 → `VCC3V3` | 3.3 V | 配置属性：`CFGBVS=VCCO`、`CONFIG_VOLTAGE=3.3` | SRC-001 第 4、6 页 | 已确认（可用于开发） |
+| Bank 12 | `VCCO_12`：U23/V20/Y24/AA21/AC25/AD22/AF26 → `VADJ2` | 待确认 | 待确认 | SRC-001 第 6 页 | 待确认 |
+| Bank 13 | `VCCO_13`：K24/N25/P22/R19/T16/T26 → `VADJ2` | 待确认 | 待确认 | SRC-001 第 6 页 | 待确认 |
+| Bank 14 | `VCCO_14`：A21/C25/D22/F26/G23/L21 → `VADJ1` | 待确认 | 待确认 | SRC-001 第 6 页 | 待确认 |
+| Bank 15 | `VCCO_15`：B18/E19/F16/H20/J17/M18 → `VADJ1` | 用户确认 3.3 V | `LVCMOS33`（普通单端 IO） | SRC-001 第 6 页 + 用户确认 | 用户确认；仅当具体信号端到端闭合后可用于开发 |
+| Bank 16 | `VCCO_16`：A11/B8/C15/D12/E9/G13/H10 → `VCC3V3` | 3.3 V | 需按具体接口确认 | SRC-001 第 6 页 | 已确认（电压）；接口待确认 |
+| Bank 32 | `VCCO_32`：W17/Y14/AB18/AC15/AE19/AF16 → `VCC1V5` | 1.5 V | 待具体接口确认 | SRC-001 第 6 页 | 已确认（电压）；接口待确认 |
+| Bank 33 | `VCCO_33`：V10/W7/AA11/AB8/AD12/AE9 → `VCC1V5` | 1.5 V | 待具体接口确认 | SRC-001 第 6 页 | 已确认（电压）；接口待确认 |
+| Bank 34 | `VCCO_34`：U3/Y4/AA1/AC5/AD2/AF6 → `VCC1V5` | 1.5 V | `LVCMOS15`（仅限已逐项核对的普通单端 IO） | SRC-001 第 6 页 | 已确认（电压）；接口待确认 |
+| MGT115/MGT116 | `MGTAVCC`/`MGTAVTT`、`MGT1V0`、`MGT1V2`、`MGTAUX` | 电源网已见；接口使用时再逐项核对 | 不适用 | SRC-001 第 5、6 页 | 待确认 |
 
-```text
-AF7→DDR0A0；AB11→DDR0A1；AD9→DDR0A2；AC7→DDR0A3；AC11→DDR0A4；AB7→DDR0A5；AF10→DDR0A6；AA7→DDR0A7；AD11→DDR0A8；AC9→DDR0A9；AE13→DDR0A10；AE10→DDR0A11
-AF12→DDR0A12；AB9→DDR0A13；AD10→DDR0A14；AC8→DDR0BA0；AE12→DDR0BA1；AF8→DDR0BA2；AB10→DDR0CAS；AF13→DDR0CKE；AC12→DDR0CLK0N；AB12→DDR0CLK0P；AD8→DDR0CS；Y1→DDR0D0
-Y2→DDR0D1；V2→DDR0D2；AC2→DDR0D3；W1→DDR0D4；Y3→DDR0D5；V1→DDR0D6；AB2→DDR0D7；U5→DDR0D8；V4→DDR0D9；U6→DDR0D10；U2→DDR0D11；V6→DDR0D12
-U1→DDR0D13；U7→DDR0D14；V3→DDR0D15；AC3→DDR0D16；AD6→DDR0D17；AB4→DDR0D18；Y5→DDR0D19；AC4→DDR0D20；AB6→DDR0D21；AA4→DDR0D22；AD5→DDR0D23；Y17→DDR0D24
-W15→DDR0D25；V19→DDR0D26；V14→DDR0D27；V17→DDR0D28；W14→DDR0D29；V18→DDR0D30；W16→DDR0D31；AA14→DDR0D32；AB16→DDR0D33；AC14→DDR0D34；AA17→DDR0D35；AD14→DDR0D36
-AA18→DDR0D37；AB14→DDR0D38；AB15→DDR0D39；AE5→DDR0D40；AE2→DDR0D41；AE3→DDR0D42；AD1→DDR0D43；AE6→DDR0D44；AE1→DDR0D45；AD4→DDR0D46；AF3→DDR0D47；AE15→DDR0D48
-AD16→DDR0D49；AF15→DDR0D50；AD15→DDR0D51；AF17→DDR0D52；AF19→DDR0D53；AF14→DDR0D54；AF20→DDR0D55；AA20→DDR0D56；AC19→DDR0D57；AA19→DDR0D58；AB17→DDR0D59；AB19→DDR0D60
-AC18→DDR0D61；AB20→DDR0D62；AD18→DDR0D63；AA2→DDR0DM0；W3→DDR0DM1；AC6→DDR0DM2；V16→DDR0DM3；AA15→DDR0DM4；AF2→DDR0DM5；AE17→DDR0DM6；AD19→DDR0DM7；AC1→DDR0DQS00N
-AB1→DDR0DQS00P；W5→DDR0DQS10N；W6→DDR0DQS10P；AB5→DDR0DQS20N；AA5→DDR0DQS20P；W19→DDR0DQS30N；W18→DDR0DQS30P；Y16→DDR0DQS40N；Y15→DDR0DQS40P；AF4→DDR0DQS50N；AF5→DDR0DQS50P；AF18→DDR0DQS60N
-AE18→DDR0DQS60P；AE20→DDR0DQS70N；AD20→DDR0DQS70P；AE8→DDR0ODT；AF9→DDR0RAS；AA8→DDR0RESET；AE7→DDR0WE；AA3→sys0clk0i
-```
+## 3. 已逐项核对的单信号映射
 
-### Core 原理图第 4-6 页 - 配置、XADC 与 GT
+本节只列出已经按图页视觉核对的信号。它不是“全量完成”的声明；其余 FPGA 相连网络仍处于逐行重建队列中。
 
-```text
-# 第 4 页
-C8→FLASH0CLK；P6→PROG；T5→VCC3V3；P11→XADC0N；N12→XADC0P
+| FPGA ball / 专用站点 | Bank / 资源类型 | FPGA 原理图引脚名 | 核心板网络 | 核心板端点或连接器针脚 | 对端板/器件/针脚 | 电气事实 | 精确来源 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| P7 | Configuration Bank 0 | `CFGBVS_0` | `VCC3V3` | 直连配置电平 | 不适用 | 配置电压为 3.3 V | SRC-001 第 4、6 页 | 已确认（可用于开发） |
+| T5 | Configuration Bank 0 | `M0_0` | `VCC3V3` | 直连模式脚 | 不适用 | 模式脚；不是 CFGBVS | SRC-001 第 4 页 | 已确认 |
+| C8 | Configuration Bank 0 | `CCLK_0` | `FLASH_CLK` | QSPI IC1.SCK（经 R6） | `S25FL256SAGNFI00` | 33 Ω 串阻 | SRC-001 第 4 页 | 已确认；Flash 工作包才可引用 |
+| B24 | Bank 14 | 普通 IO | `FLASH_IO0` | QSPI IC1.SDO/DQ1 | `S25FL256SAGNFI00` | Bank 14 电压未闭合 | SRC-001 第 2、4、6 页 | 待确认 |
+| A25 | Bank 14 | 普通 IO | `FLASH_IO1` | QSPI IC1.SDI/DQ0 | `S25FL256SAGNFI00` | Bank 14 电压未闭合 | SRC-001 第 2、4、6 页 | 待确认 |
+| B22 | Bank 14 | 普通 IO | `FLASH_IO2` | QSPI IC1.WP/DQ2 | `S25FL256SAGNFI00` | Bank 14 电压未闭合 | SRC-001 第 2、4、6 页 | 待确认 |
+| A22 | Bank 14 | 普通 IO | `FLASH_IO3` | QSPI IC1.HOLD/DQ3 | `S25FL256SAGNFI00` | Bank 14 电压未闭合 | SRC-001 第 2、4、6 页 | 待确认 |
+| C23 | Bank 14 | 普通 IO | `FLASH_nCS` | QSPI IC1.CS | `S25FL256SAGNFI00` | Bank 14 电压未闭合 | SRC-001 第 2、4、6 页 | 待确认 |
+| P6 | Configuration Bank 0 | `PROGRAM_B_0` | `PROG` | R9 上拉至 `VCC3V3` | 不适用 | 配置专用脚 | SRC-001 第 4 页 | 已确认 |
+| L8 | Configuration Bank 0 | `TCK_0` | `JTAG_TCK` | P1.9（核心板 JTAG Header） | JTAG 探头 | 配置专用调试脚 | SRC-001 第 4 页 | 已确认 |
+| N8 | Configuration Bank 0 | `TMS_0` | `JTAG_TMS` | P1.5 | JTAG 探头 | 配置专用调试脚 | SRC-001 第 4 页 | 已确认 |
+| R6 | Configuration Bank 0 | `TDI_0` | `JTAG_TDI` | P1.3 | JTAG 探头 | 配置专用调试脚 | SRC-001 第 4 页 | 已确认 |
+| R7 | Configuration Bank 0 | `TDO_0` | `JTAG_TDO` | P1.1 | JTAG 探头 | 配置专用调试脚 | SRC-001 第 4 页 | 已确认 |
+| U20 | Bank 13 | `IO_L18P_T2_13` | `B13_L18_N` | HT1.A36 | MCON J5.B36 | Bank 13 电压为 `VADJ2`，实际值待确认 | SRC-001 第 2、6、10 页；SRC-002 第 4 页 | 核心板到 MCON 连接器已确认；功能待确认 |
+| U19 | Bank 13 | `IO_L17N_T2_13` | `B13_L18_P` | HT1.A35 | MCON J5.B35 | Bank 13 电压为 `VADJ2`，实际值待确认 | SRC-001 第 2、6、10 页；SRC-002 第 4 页 | 核心板到 MCON 连接器已确认；功能待确认 |
+| A18 | Bank 15 | `IO_L1P_T0_AD0P_15` | `B150L20P`（连接器页标作 `B15_L2_P`） | HT3.B36 | MCON J7.A36 → `LED1` → R7/Q1/D1 | Bank 15 为用户确认 3.3 V；MCON 端 Q1 为 N-MOS 低端开关，控制高电平点亮 | SRC-001 第 2、6、10 页；SRC-002 第 1、4 页；用户确认（2026-09-07） | 用户确认（可用于 LED 开发） |
+| AA3 | Bank 34 | `IO_L12P_T1_MRCC_34` | `sys_clk_i` | IC2.3 `OUT`，100 MHz 本振输出 | FPGA 系统/调试采样时钟 | Bank 34 为 1.5 V；该单端时钟输入使用 `LVCMOS15`；`MRCC` 可作全局时钟输入 | SRC-001 第 3 页；SRC-001 第 6 页；SRC-006 | 用户视觉确认（可用于 ILA 调试） |
+| A3/A4 | MGT116 lane 3 TX | `MGTXTXN3_116` / `MGTXTXP3_116` | `MGT116_TX3_N/P` | HT2.A25/A26 | MCON J6.B26/B27 → C536/C535 → M88E1111 S_IN-/S_IN+ | 100 Ω 差分；AC 耦合；TX 相对 FPGA | SRC-001 第 5、10 页；SRC-002 第 4、9 页；SRC-005 | 已确认（可用于后续 SGMII 方案） |
+| B5/B6 | MGT116 lane 3 RX | `MGTXRXN3_116` / `MGTXRXP3_116` | `MGT116_RX3_N/P` | HT2.B25/B26 | MCON J6.A26/A27 → C538/C537 → M88E1111 S_OUT-/S_OUT+ | 100 Ω 差分；AC 耦合；RX 相对 FPGA | SRC-001 第 5、10 页；SRC-002 第 4、9 页；SRC-005 | 已确认（可用于后续 SGMII 方案） |
+| D5/D6 | MGT116 REFCLK0 | `MGTREFCLK0N/P_116` | `MGT116_CLK0_N/P` | HT2.A27/A28 | MCON J6.B30/B31；MCON 侧来源尚未闭合 | 差分 GT 参考时钟；频率待确认 | SRC-001 第 5、10 页；SRC-002 第 4 页 | 待确认 |
 
-# 第 5 页：MGT115
-H5→MGT1150CLK00N；H6→MGT1150CLK00P；K5→MGT1150CLK10N；K6→MGT1150CLK10P；R3→MGT1150RX00N；R4→MGT1150RX00P；N3→MGT1150RX10N；N4→MGT1150RX10P；L3→MGT1150RX20N；L4→MGT1150RX20P；J3→MGT1150RX30N；J4→MGT1150RX30P
-P1→MGT1150TX00N；P2→MGT1150TX00P；M1→MGT1150TX10N；M2→MGT1150TX10P；K1→MGT1150TX20N；K2→MGT1150TX20P；H1→MGT1150TX30N；H2→MGT1150TX30P
+## 4. 功能路径
 
-# 第 5 页：MGT116
-D5→MGT1160CLK00N；D6→MGT1160CLK00P；F5→MGT1160CLK10N；F6→MGT1160CLK10P；G3→MGT1160RX00N；G4→MGT1160RX00P；E3→MGT1160RX10N；E4→MGT1160RX10P；C3→MGT1160RX20N；C4→MGT1160RX20P；B5→MGT1160RX30N；B6→MGT1160RX30P
-F1→MGT1160TX00N；F2→MGT1160TX00P；D1→MGT1160TX10N；D2→MGT1160TX10P；B1→MGT1160TX20N；B2→MGT1160TX20P；A3→MGT1160TX30N；A4→MGT1160TX30P
-
-# 第 6 页
-N6→MGTAUX；U11→VCC1V8
-```
-
-## 时钟、复位、配置与 GT
-
-| 信号或资源 | 值/连接关系 | 来源页码 | 状态 |
+| 功能 | 已证实路径 | 可用结论 | 来源与状态 |
 |---|---|---|---|
-| `sys0clk0i` | FPGA ball `AA3`；频率、振幅与时钟源型号未从本次抽取资料确定 | SRC-001 第 3 页 | 引脚-网络已确认；频率待确认 |
-| QSPI | `B24/A25/B22/A22/C23/C8` 分别对应 `FLASH0IO0/1/2/3/nCS/CLK` | SRC-001 第 2、4 页 | 已确认；Flash 型号、模式与镜像保护策略待确认 |
-| 配置控制 | `P6→PROG`，`B25→PUDC0B`；`T5→VCC3V3` 是配置相关电源网络 | SRC-001 第 2、4 页 | 已确认；有效电平与时序待确认 |
-| XADC | `P11→XADC0N`，`N12→XADC0P` | SRC-001 第 4 页 | 已确认；模拟输入范围待确认 |
-| MGT115 | 2 组 GT 参考时钟、4 RX lane、4 TX lane，见映射 | SRC-001 第 5 页 | 已确认；使用用途、频率待确认 |
-| MGT116 | 2 组 GT 参考时钟、4 RX lane、4 TX lane，见映射 | SRC-001 第 5 页 | 已确认；SGMII 占用 lane 3，见下一节 |
-| DDR3 | 64-bit 数据、8 DQS、地址/命令/控制信号，见映射 | SRC-001 第 3 页 | 引脚-网络已确认；DRAM 型号、频率、VREF/MIG 参数待确认 |
+| JTAG | FPGA `TCK/TMS/TDI/TDO` → Core P1 Header；MCON 另有 J4 JTAG 接口，但本次未重新追踪 Core 与 MCON 物理调试连接 | 可进行已经授权的被动枚举；下载仍需工作包明确授权 | SRC-001 第 4 页；SRC-002 第 4 页；只读日志，已确认 |
+| QSPI 配置 | FPGA 配置 Bank 0 与 IC1 `S25FL256SAGNFI00` 已闭合 | Flash 型号与 FPGA 配置网络已知；Bank 14 的 VADJ1 电压未确认，不能制定 Flash XDC/写入方案 | SRC-001 第 2、4、6 页，部分确认 |
+| SGMII | MGT116 lane 3 TX/RX 已闭合至 M88E1111 的 SGMII 收发引脚 | TX/RX lane、方向、P/N、AC 耦合已知；REFCLK 频率和 PHY 控制尚缺 | 上表 + SRC-005，部分确认 |
+| MCON LED1 | MCON `LED1` → J7.A36 → Core HT3.B36 → `B15_L2_P/B150L20P` → FPGA A18 | LED 端到端路径由用户确认；MCON 第 1 页表明 FPGA 输出高电平使 Q1 导通、D1 点亮。 | SRC-001 第 2、6、10 页；SRC-002 第 1、4 页；用户确认（2026-09-07），可用于 LED 开发 |
+| `sys_clk_i` | IC2（100 MHz）→ `sys_clk_i` → FPGA AA3（Bank 34） | 可为 LED ILA 提供 100 MHz 采样时钟；约束为 AA3 / `LVCMOS15` / 10.000 ns。该结论仅覆盖本工作包的 ILA 采样，不推出其他时钟或接口的时序约束。 | SRC-001 第 3、6 页；SRC-006，用户确认 |
+| `B13_L18_N` | FPGA U20 → Core HT1.A36 → MCON J5.B36 | 这是独立已知 IO 路径；当前资料的 `LED1` 网络位于 MCON J7.A36，而非 J5.B36 | SRC-001 第 2、10 页；SRC-002 第 4 页，核心板到 MCON 连接器已确认 |
 
-## HT 连接器与 SGMII 路径
+## 5. 待确认项
 
-### 用户已确认的 SGMII 差分路径
-
-下表采用用户对 MCON J6 管脚的明确更正；连接器编号不与 HT2 页面的编号作未经证实的一一换算。
-
-| 方向（相对 FPGA） | PHY 引脚与网络 | 串联电容 | MCON J6 | 核心板 HT2 | FPGA GT 资源 | 来源与状态 |
-|---|---|---|---|---|---|---|
-| FPGA TX（至 PHY）负端 | M88E1111 `S_IN-`（`A4`）→ `SGMII_TX_N` | `C536` | `B26` | `A25` | `MGT116 TX3_N`，ball `A3` | SRC-002 第 9 页 + 用户确认，已确认 |
-| FPGA TX（至 PHY）正端 | M88E1111 `S_IN+`（`A3`）→ `SGMII_TX_P` | `C535` | `B27` | `A26` | `MGT116 TX3_P`，ball `A4` | SRC-002 第 9 页 + 用户确认，已确认 |
-| FPGA RX（来自 PHY）负端 | M88E1111 `S_OUT-`（`A8`）→ `SGMII_RX_N` | `C538` | `A26` | `B25` | `MGT116 RX3_N`，ball `B5` | SRC-002 第 9 页 + 用户确认，已确认 |
-| FPGA RX（来自 PHY）正端 | M88E1111 `S_OUT+`（`A7`）→ `SGMII_RX_P` | `C537` | `A27` | `B26` | `MGT116 RX3_P`，ball `B6` | SRC-002 第 9 页 + 用户确认，已确认 |
-
-结论：SGMII 使用 **MGT116 lane 3**；TX/RX 方向及 P/N 极性均已确认。该接口是后续 UDP 工作包应首先引用的硬件路径，但尚不能据此创建 GT Wizard、XDC 或下载镜像。
-
-### M88E1111 相关控制信号
-
-| 信号 | 已知连接/含义 | 来源 | 状态 |
+| 编号 | 事实 | 影响 | 最小下一证据 |
 |---|---|---|---|
-| `PHY_MDC_L`、`PHY_MDIO_L` | MCON 板接至 M88E1111 的 MDC/MDIO；由 J6 继续到核心板的具体 FPGA 普通 IO 尚未在本次建立跨板一一对应 | SRC-002 第 4、9 页 | 待确认 |
-| `PHY_INT_L`、`PHY_RESET_L` | MCON 板的 PHY 中断与复位网络；具体 FPGA 管脚、有效电平、复位时序待确认 | SRC-002 第 4、9 页 | 待确认 |
-| M88E1111 SGMII 时钟 | PHY 端 `S_CLK+/-` 可见，实际送入 MGT116 的参考时钟来源、频率和走线尚未闭合 | SRC-002 第 9 页 | 待确认 |
+| OQ-001 | Core HT1/HT2/HT3 与 MCON J5/J6/J7 的其余接口互配关系、方向及装配版本 | 除 LED1 外的跨板接口 | 板卡照片/装配图/BOM，或连接器配对说明；LED1 路径已由用户确认，不受此项阻塞 |
+| OQ-002 | `LED1` 的端到端路径 | 已解决：用户确认 `LED1→J7.A36→HT3.B36→B150L20P→A18`；`B13_L18_N/U20` 为另一条独立、非 LED 路径 | LED 下载验证可选择 A18/Bank 15，采用高电平点亮 |
+| OQ-003 | `VADJ1`、`VADJ2` 实际电压 | Bank 12/13/14/15 的 IOSTANDARD | 电源/BOM/实测记录；不得用网名推断 |
+| OQ-004 | MGT116 REFCLK0 的来源、频率、抖动与 PHY strap | SGMII/UDP GT IP | MCON 第 8 页、PHY 数据手册/strap 表与板级资料 |
+| OQ-005 | PHY MDC/MDIO/INT/RESET 的 FPGA 端点、有效电平与复位时序 | PHY 初始化与链路建立 | MCON J6/AFE 跨板资料、M88E1111 数据手册 |
+| OQ-006 | 其余 FPGA 普通 IO、DDR、GT 和连接器网络的逐行重建 | 通用后续需求 | 按 SRC-001 页与对端资料逐项登记 |
 
-## JTAG 与板级操作边界
+## 6. 变更记录
 
-| 项目 | 当前事实 | 状态 |
+| 日期 | 变更 | 结论 |
 |---|---|---|
-| 调试接口 | MCON 第 4 页包含 `J4 JTAG` 以及 `JTAG_TCK/TMS/TDI/TDO` 网络 | 原理图已确认 |
-| 当前连接状态 | 用户说明板卡已上电且 JTAG 已连接 | 已确认 |
-| 被动扫描 | 历史会话观察到一个 Digilent 目标与一个 `xc7k325t`；未在本初始化阶段重跑 | 历史证据，待需要时授权复核 |
-| 写入或下载 | 本次没有下载 bitstream、擦写 Flash、写 PHY/MDIO、复位外设或发送网络报文 | 已确认未执行 |
-
-## 待确认项
-
-| 编号 | 事实 | 影响范围 | 下一证据 |
-|---|---|---|---|
-| OQ-001 | 实际板卡装配版本与 Core/MCON/AFE 原理图版本是否一致 | 全部接口 | 板卡丝印、BOM 或版本记录 |
-| OQ-002 | `sys0clk0i` 的频率、标准与时钟源 | 任何 RTL 时钟/时序约束 | 时钟页原理图视觉复核或器件资料 |
-| OQ-003 | MGT116 SGMII 参考时钟的实际频率、来源与抖动要求 | GT Wizard、SGMII PCS/PMA、时序 | 连接器/时钟路径原理图与 PHY 配置资料 |
-| OQ-004 | M88E1111 strap、MDIO 地址、MDC/MDIO/INT/RESET 的 FPGA 管脚、极性与复位时序 | PHY 初始化、链路建立 | MCON/AFE 跨页网表和 PHY 数据手册 |
-| OQ-005 | FPGA MAC 地址、IP 地址、UDP 端口、主机地址与协议校验策略 | UDP Demo | 用户确认的网络配置和 SRC-004 需求条目 |
-| OQ-006 | QSPI Flash 型号、容量、上电配置模式及原镜像保护策略 | Flash/配置工作包 | Flash 器件位号、数据手册、现有镜像备份策略 |
-| OQ-007 | DDR3 器件型号、时钟频率、终端、VREF 与 MIG 参数 | DDR3 工作包 | DDR3 页原理图视觉复核与器件数据手册 |
-
-## 变更记录
-
-| 日期 | 因何需求新增或更正 | 结论与来源 |
-|---|---|---|
-| 2026-09-07 | Mode 4 初始环境建立 | 建立项目身份、资料校验、核心板 401 项 FPGA 约束相关映射、配置/GT/JTAG 边界和 SGMII lane 3 连接；未创建 Vivado 工程或实现文件。 |
-| 2026-09-07 | SGMII 路径更正 | 按用户明确确认：J6 `B26/B27` 对应 SGMII TX `N/P`，J6 `A26/A27` 对应 SGMII RX `N/P`，连接至 MGT116 lane 3。 |
+| 2026-09-07 | 首版 Mode 4 记录 | 已废止：401 条扁平文本映射不能证明端到端路径，不得继续引用。 |
+| 2026-09-07 | Mode 4 重建 | 建立 Bank 电源表、单信号表和功能路径表；视觉核对 SRC-001 第 2/4/5/6/10 页与 SRC-002 第 1/4/9 页。 |
+| 2026-09-07 | LED 路径复核 | 撤销旧的 `LED1 → M17/B150L230P` 结论。图纸连接器配对给出的候选为 `LED1 → J7.A36 → HT3.B36 → B150L20P → A18`，但它与用户提出的 `LED1→B13_L18_N` 冲突，故暂不用于开发。 |
+| 2026-09-07 | `B13_L18_N` 复核 | 确认 `B13_L18_N → U20 → HT1.A36 → MCON J5.B36`；它与 MCON `LED1` 的 J7.A36 路径不同。 |
+| 2026-09-07 | LED1 路径用户确认 | 用户确认端到端路径为 `LED1 → J7.A36 → HT3.B36 → B150L20P → FPGA A18`。A18 位于 Bank 15，使用已确认的 3.3 V 和 `LVCMOS33`；输出高电平点亮。 |
+| 2026-09-08 | ILA 采样时钟核对 | 用户截图确认 `IC2（100 MHz）→sys_clk_i→AA3`，AA3 的 FPGA 引脚名为 `IO_L12P_T1_MRCC_34`；Bank 34 供电为 1.5 V，采用 `LVCMOS15`。此前从 PDF 文本抽取推断的 AA2 / `IO_L12P` 以及 AA3 / `IO_L11N` 均已撤销，不得用于约束。 |

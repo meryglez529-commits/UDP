@@ -29,6 +29,31 @@ webtalk*.xml
 usage_statistics_webtalk.*
 NA
 
+# A GUI-created Vivado project keeps the same generated folders below its
+# project directory (for example fpga/led/led.runs/).  Keep them locally for
+# normal GUI, simulation and ILA use, but version only their source inputs.
+fpga/**/.Xil/
+fpga/**/*.cache/
+fpga/**/*.gen/
+fpga/**/*.ip_user_files/
+fpga/**/*.runs/
+fpga/**/*.sim/
+fpga/**/*.hw/
+fpga/**/*.ila
+
+# `create_ip -dir` can emit generated simulation/synthesis support beside an
+# IP's .xci.  The .xci and its creation Tcl are the reproducible inputs.
+fpga/**/led.srcs/sources_1/ip/*/doc/
+fpga/**/led.srcs/sources_1/ip/*/hdl/
+fpga/**/led.srcs/sources_1/ip/*/sim/
+fpga/**/led.srcs/sources_1/ip/*/synth/
+fpga/**/led.srcs/sources_1/ip/*/ila_v6_2/
+fpga/**/led.srcs/sources_1/ip/*/*.veo
+fpga/**/led.srcs/sources_1/ip/*/*_ooc.xdc
+fpga/**/led.srcs/sources_1/ip/*/*_sim_netlist.*
+fpga/**/led.srcs/sources_1/ip/*/*_stub.*
+fpga/**/led.srcs/sources_1/ip/*/*.xml
+
 # AI-owned generated work is retained locally when needed, while its reviewed
 # Markdown evidence remains version-controlled.
 AI-work/**/work/*
