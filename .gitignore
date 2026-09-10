@@ -6,6 +6,7 @@
 # version-controlled.
 /*.pdf
 /*.docx
+/tmp/
 
 # Vivado generated state. Authoritative sources live under fpga/.
 .Xil/
@@ -40,6 +41,7 @@ fpga/**/*.runs/
 fpga/**/*.sim/
 fpga/**/*.hw/
 fpga/**/*.ila
+fpga/**/logs/
 
 # `create_ip -dir` can emit generated simulation/synthesis support beside an
 # IP's .xci.  The .xci and its creation Tcl are the reproducible inputs.

@@ -1,12 +1,18 @@
-# DB500 UDP FPGA Bring-up
+# DB500 UDP FPGA 工程
 
-本仓库用于建立 DB500 扫描控制平台的可复现 FPGA bring-up 流程。首个交付目标是安全的 UDP 通信 Demo：设备发现、只读状态查询，以及可验证的 UDP 回包链路。
+本仓库用于在 MK7XCORE676 / Kintex-7 平台上逐步开发可验证的 FPGA 设计。当前已完成 LED
+基础设计和 M88E1111 MDIO 只读验证；UDP 数据面仍处于规划阶段。
 
-仓库分为两个职责根目录：
+目录职责：
 
-- fpga/：存放可构建的 FPGA RTL、约束、IP 配置、仿真与 Tcl。
-- AI-work/：存放每个阶段的计划、执行记录、验收证据和交接资料，是项目的审计记录。
+- [`fpga/led/led.xpr`](fpga/led/led.xpr)：用户通过 Vivado GUI 创建并持续使用的共享工程。
+  RTL、testbench、XDC、IP、仿真、综合、实现和 Hardware Manager 都以这份工程为上下文。
+- [`fpga/led/scripts/sources.tcl`](fpga/led/scripts/sources.tcl)：与 `.xpr` 对齐的显式输入清单。
+- [`AI-work/ARCHITECTURE.md`](AI-work/ARCHITECTURE.md)：项目身份、模块组成和集成事实。
+- [`AI-work/modules/`](AI-work/modules/)：每个模块的动态设计记录。
+- [`AI-work/history/legacy-2026-09-08/`](AI-work/history/legacy-2026-09-08/)：旧记录和原始
+  审计材料，仅作历史参考。
 
-原始原理图和通信协议文件保留在仓库根目录，仅作为本地输入资料，不纳入 Git。它们的来源、版本和哈希记录在 AI-work 的输入资料登记表中。
-
-当前板卡状态见 AI-work/bringup/db500-k7/udp-bringup-20260907/STATUS.md。
+原理图和 DB500 协议文档保留在仓库根目录，PHY 手册按模块文档记录的官方来源查阅；其来源
+和已核对的结论记录在架构或模块文档中。需要仿真、构建、下载、ILA 或只读诊断时，使用新版
+`fpga-cowork` 的 S/B/H/D 规范，并始终复用上述 GUI 工程及其原生产物目录。
