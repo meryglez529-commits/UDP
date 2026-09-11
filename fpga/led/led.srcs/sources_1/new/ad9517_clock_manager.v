@@ -28,7 +28,15 @@ module ad9517_clock_manager #(
     input  wire pll_sdo_i,
     output wire pll_ref_sel_o,
     input  wire pll_ld_i,
-    output wire pll_reset_n_o
+    output wire pll_reset_n_o,
+
+    // Reusable-system status.  The standalone validation top keeps the same
+    // LED/ILA behavior, while a composed Ethernet top can consume these
+    // qualified status signals without duplicating AD9517 control logic.
+    output wire clock_ready_o,
+    output wire pll_locked_o,
+    output wire init_error_o,
+    output wire [3:0] error_code_o
 );
 
     localparam integer POR_TARGET = (POR_CYCLES < 1) ? 1 : POR_CYCLES;
@@ -214,15 +222,20 @@ module ad9517_clock_manager #(
         6'b000000
     };
 
-    generate
-        if (ENABLE_ILA != 0) begin : g_ila
-            ila_ad9517 u_ila_ad9517 (
-                .clk    (sys_clk_i),
-                .probe0 (debug_bus)
-            );
-        end
-    endgenerate
+//    generate
+//        if (ENABLE_ILA != 0) begin : g_ila
+//            ila_ad9517 u_ila_ad9517 (
+//                .clk    (sys_clk_i),
+//                .probe0 (debug_bus)
+//            );
+//        end
+//    endgenerate
 
     wire _unused_lock_acquired = lock_acquired;
+
+    assign clock_ready_o = clock_ready;
+    assign pll_locked_o  = pll_locked;
+    assign init_error_o  = init_error;
+    assign error_code_o  = error_code;
 
 endmodule

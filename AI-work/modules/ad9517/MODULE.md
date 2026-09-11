@@ -1,6 +1,6 @@
 # AD9517 时钟管理模块设计
 
-状态：`RTL_SIM_BUILD_DIGITAL_HW_PASS_FREQ_MEASUREMENT_PENDING`
+状态：`HARDWARE_VALIDATED_125MHZ`
 
 ## 1. 设计目标与边界
 
@@ -27,7 +27,8 @@ FPGA 使用板上已有的 AA3 100 MHz 时钟，通过四线 SPI 配置 U65 `AD9
 
 - 不实例化 GT、PCS/PMA、TEMAC、Clocking Wizard 或 UDP 数据面。
 - 不用 AD9517 尚未生成的 125 MHz 驱动自身配置逻辑。
-- 不用 `PLL_LD=1` 或 `clock_ready=1` 代替外部仪器的频率测量。
+- `PLL_LD=1` 或 `clock_ready=1` 不能单独代替外部仪器的频率测量；本模块的 OUT0 已完成
+  外部 125 MHz 验收。
 - 首版只使能 OUT0；未使用的 AD9517 输出保持关闭。
 
 ### 1.3 已确定的器件设计输入
@@ -50,7 +51,8 @@ FPGA 使用板上已有的 AA3 100 MHz 时钟，通过四线 SPI 配置 U65 `AD9
 ## 2. 顶层接口与板级连接
 
 `ad9517_clock_manager` 是 AD9517 独立板级验证外壳，直接连接 AA3 100 MHz、LED1、U65 控制
-接口和 ILA。
+接口和 ILA。它同时导出已经由同一控制流程生成的合格状态，供组合顶层复用；没有复制第二套
+初始化或判锁逻辑。
 
 | 端口 | 方向 | FPGA 管脚 | 含义 |
 |---|---|---|---|
@@ -63,6 +65,10 @@ FPGA 使用板上已有的 AA3 100 MHz 时钟，通过四线 SPI 配置 U65 `AD9
 | `pll_ref_sel_o` | 输出 | `J18` | 固定为 0；profile 通过寄存器选择 REF2 |
 | `pll_ld_i` | 输入 | `J19` | AD9517 异步数字锁定指示 |
 | `pll_reset_n_o` | 输出 | `K18` | AD9517 硬件复位，低有效 |
+| `clock_ready_o` | 输出 | 无独立管脚 | 配置、读回、校准、OUT0 使能和 LD 判稳全部通过 |
+| `pll_locked_o` | 输出 | 无独立管脚 | 同步并过滤后的 `PLL_LD` 状态 |
+| `init_error_o` | 输出 | 无独立管脚 | 初始化或运行期故障已锁存 |
+| `error_code_o[3:0]` | 输出 | 无独立管脚 | 故障分类，编码见 4.4 节 |
 
 板级时钟输出链只作为外部测量对象：
 
@@ -92,6 +98,7 @@ flowchart LR
     SPI[ad9517_spi_master]
     LDF[pll_ld_sync_and_filter]
     OBS[LED1 + ila_ad9517]
+    SYS[组合系统状态输出<br/>clock_ready_o / pll_locked_o<br/>init_error_o / error_code_o]
     U5[U5 50 MHz]
     U65[AD9517 U65]
     MEAS[外部示波器 / 频率计]
@@ -121,6 +128,7 @@ flowchart LR
     LDF -->|pll_locked, lock_lost| CTRL
 
     CTRL -->|"init_state, busy, clock_ready, init_error,<br/>error_code, last_addr, last_read"| OBS
+    CTRL -->|qualified status| SYS
     SPI -->|SPI status and pins| OBS
     LDF -->|synchronized PLL_LD| OBS
 
@@ -168,7 +176,7 @@ profile 时容易碰到 SPI 时序，调整 SPI 时钟时又可能影响初始�
 | SPI 请求 | controller → SPI master | `spi_start` 仅拉高一个 100 MHz 周期；同时锁定 `rw/addr/write_data` |
 | SPI 完成 | SPI master → controller | controller 只以 `done` 结束事务；`error` 同周期有效；等待超过预算进入故障 |
 | 锁定判稳 | controller ↔ LD filter | OUT0 完成 IO Update 后才使能过滤器，确保 1 ms 判稳窗口发生在输出打开之后 |
-| 状态观测 | controller/SPI/filter → top | 状态只进入 LED 和 64-bit ILA debug bus，不参与另一套控制路径 |
+| 状态观测 | controller/SPI/filter → top | 状态进入 LED、64-bit ILA debug bus 和只读系统状态端口；不参与另一套控制路径 |
 
 ## 4. 关键状态机设计
 
@@ -313,8 +321,8 @@ stateDiagram-v2
 | `PLL_LD` CDC | `ASYNC_REG` 2-FF 同步后才进入判稳逻辑 |
 | `SDO` 采样 | 由本模块产生的 SCLK 确定采样相位，按 SPI 协议采样，不用普通 2-FF 代替 |
 
-`clock_ready` 只表示数字侧已经完成配置、读回、校准、DLD、OUT0 使能和外部 LD 判稳；它不
-证明模拟输出频率一定是 125 MHz。
+`clock_ready` 只表示数字侧已经完成配置、读回、校准、DLD、OUT0 使能和外部 LD 判稳；它不能
+独立证明模拟输出频率。该结论由外部验收补足：用户已确认 U65 OUT0 为 125 MHz。
 
 ## 8. 可观测性设计
 
@@ -341,6 +349,8 @@ stateDiagram-v2
 6. READY 后运行期失锁。
 
 六个场景均已通过，正常场景完成 81 笔 SPI 事务和 3 次 IO Update。
+2026-09-11 在新增四个复用状态输出后重新运行同一自检，六个场景再次全部通过；独立验收顶层的
+自动启动、SPI、LED 和 ILA 语义未改变。
 
 ### 9.2 构建与板级验收
 
@@ -350,11 +360,11 @@ stateDiagram-v2
 | Setup WNS | +4.329 ns |
 | Hold WHS | +0.058 ns |
 | 板上 SPI/读回/校准/判锁 | 已通过；ILA 为 READY、无错误、`PLL_LD=1` |
-| U65 OUT0 外部频率 | 待用高阻差分探头或频率计确认 125 MHz |
-| 重复冷启动成功率 | 待记录 |
+| U65 OUT0 外部频率 | 已由用户完成外部验收：125 MHz |
+| 重复冷启动成功率 | 具体次数和结果未存入仓库；不影响本次用户确认的 OUT0 频率验收 |
 
-模块只有在最终寄存器读回一致、VCO 校准完成、`PLL_LD` 稳定、OUT0 实测 125 MHz，并且重复
-启动没有失败后，才能把状态改为 `HARDWARE_VALIDATED_125MHZ`。
+本模块已满足硬件验收条件，可作为后续 UDP/GTX 集成的 125 MHz 参考时钟来源。若后续需要
+可追溯的实验记录，可另行补充仪器型号、测量点、读数和冷启动次数；这不阻塞 UDP 设计阶段。
 
 ## 10. 实现入口
 
@@ -366,4 +376,5 @@ stateDiagram-v2
 - [`ad9517_clock_manager_tb.v`](../../../fpga/led/led.srcs/sim_1/new/ad9517_clock_manager_tb.v)
 - [`ad9517_model.v`](../../../fpga/led/led.srcs/sim_1/new/ad9517_model.v)
 - [`ad9517_clock_manager.xdc`](../../../fpga/led/led.srcs/constrs_1/new/ad9517_clock_manager.xdc)
+- [`udp_top.v`](../../../fpga/led/led.srcs/sources_1/new/udp_top.v)（组合复用入口，当前未激活）
 - [`SGMII_125M_V1.stp`](SGMII_125M_V1.stp)

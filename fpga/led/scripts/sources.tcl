@@ -26,19 +26,47 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sources_1 new ad9517 ad9517_init_ctrl.v] \
         [file join $project_dir led.srcs sources_1 new ad9517 ad9517_profile_rom.v] \
         [file join $project_dir led.srcs sources_1 new ad9517 ad9517_spi_master.v] \
-        [file join $project_dir led.srcs sources_1 new ad9517 pll_ld_sync_and_filter.v]]
+        [file join $project_dir led.srcs sources_1 new ad9517 pll_ld_sync_and_filter.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet ethernet_link_speed_ctrl.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet ethernet_link_top.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet fixed_host_rx_parser.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_rx_message_fifo.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_tx_message_buffer.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet fixed_host_tx_engine.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_transport_stats.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_transport_fixed_host.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_payload_echo.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_bram_tdp.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_config_vector_sm.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_fifo_block.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_reset_sync.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_rx_client_fifo.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_support.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_sync_block.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_ten_100_1g_eth_fifo.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_tx_client_fifo.v] \
+        [file join $project_dir led.srcs sources_1 new udp_top.v] \
+        [file join $project_dir led.srcs sources_1 new udp_echo_test_top.v]]
     set ip_files [list \
         [file join $project_dir led.srcs sources_1 ip ila_led ila_led.xci] \
         [file join $project_dir led.srcs sources_1 ip ila_mdio ila_mdio.xci] \
-        [file join $project_dir led.srcs sources_1 ip ila_ad9517 ila_ad9517.xci]]
+        [file join $project_dir led.srcs sources_1 ip ila_ad9517 ila_ad9517.xci] \
+        [file join $project_dir led.srcs sources_1 ip ethernet_clk_wiz_200m ethernet_clk_wiz_200m.xci] \
+        [file join $project_dir led.srcs sources_1 ip pcs_pma_sgmii_gtx pcs_pma_sgmii_gtx.xci] \
+        [file join $project_dir led.srcs sources_1 ip temac_sgmii_tri_speed temac_sgmii_tri_speed.xci]]
     set xdc_files [list \
         [file join $project_dir led.srcs constrs_1 new led_static.xdc] \
-        [file join $project_dir led.srcs constrs_1 new ad9517_clock_manager.xdc]]
+        [file join $project_dir led.srcs constrs_1 new ad9517_clock_manager.xdc] \
+        [file join $project_dir led.srcs constrs_1 new udp_top.xdc]]
     set sim_files [list \
         [file join $project_dir led.srcs sim_1 new led_static_tb.v] \
         [file join $project_dir led.srcs sim_1 new mdio_clause22_model.v] \
         [file join $project_dir led.srcs sim_1 new ad9517_model.v] \
-        [file join $project_dir led.srcs sim_1 new ad9517_clock_manager_tb.v]]
+        [file join $project_dir led.srcs sim_1 new ad9517_clock_manager_tb.v] \
+        [file join $project_dir led.srcs sim_1 new ethernet_clk_wiz_200m_tb.v] \
+        [file join $project_dir led.srcs sim_1 new ethernet_link_speed_ctrl_tb.v] \
+        [file join $project_dir led.srcs sim_1 new udp_transport_fixed_host_tb.v] \
+        [file join $project_dir led.srcs sim_1 new udp_payload_echo_tb.v]]
 
     foreach path $rtl_files { led_require_file RTL $path }
     foreach path $ip_files { led_require_file IP $path }
