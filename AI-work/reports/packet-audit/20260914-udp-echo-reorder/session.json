@@ -1,0 +1,29 @@
+{
+  "capture": "capture.pcapng",
+  "capture_sha256": "E5240BAEE2A85C839B915B85C91449E797E3CE7AF627AA83CF2AEE1FCEC547DC",
+  "capture_backend": "pktmon",
+  "capture_interface_id": 12,
+  "capture_interface": "ASIX USB to Gigabit Ethernet Family Adapter",
+  "capture_filter": "host 192.168.1.20 and UDP port 32000",
+  "capture_duration_seconds": 12,
+  "fpga_ip": "192.168.1.20",
+  "host_ip": "192.168.1.10",
+  "udp_port": 32000,
+  "payload_profile": {
+    "name": "UPF1 performance payload",
+    "source": "fpga/led/scripts/test_udp_performance.py",
+    "status": "host-verified",
+    "header": "network byte order: magic[4], run_id[4], sequence[4], send_timestamp_ns[8]"
+  },
+  "run_id": "0xE2429B64",
+  "test_result": "OBSERVED_ERRORS",
+  "test_json": "fpga/led/logs/comb02_capture_64_50m_20260914_092612_0xE2429B64.json",
+  "capture_audit": {
+    "host_to_fpga_matching_frames": 551120,
+    "host_to_fpga_reorder": 0,
+    "fpga_to_host_matching_frames": 609106,
+    "fpga_to_host_reorder": 94,
+    "capture_packet_loss_observed": true,
+    "scope": "Reordering occurrence and direction only; capture loss prevents packet-count reconciliation."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "counts": {"PASS": 6, "WARN": 1, "FAIL": 1},
+  "findings": [
+    {
+      "verdict": "FAIL",
+      "id": "RETURN_SEQUENCE_REORDERED",
+      "packet": 40894,
+      "message": "FPGA-to-PC packet sequence 65745 was captured after 65746; the corresponding PC-to-FPGA packets were captured in order 65744,65745,65746,65747."
+    },
+    {
+      "verdict": "WARN",
+      "id": "CAPTURE_LOSS",
+      "message": "pktmon did not retain every performance packet, so capture counts cannot be reconciled with the socket result and the capture cannot localize the reorder to RTL versus NIC/driver ingress."
+    }
+  ]
+}

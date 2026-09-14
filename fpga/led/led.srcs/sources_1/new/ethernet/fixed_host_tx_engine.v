@@ -96,9 +96,15 @@ module fixed_host_tx_engine #(
                              (output_index == 11'd41) :
                              ((state == TX_UDP) &&
                               (output_index == (send_payload_length + 11'd41)));
+    // udp_tx_payload_ring uses synchronous Block RAM.  While a payload byte is
+    // accepted, request the following byte before the active clock edge so it
+    // is available when output_index advances.  During backpressure the
+    // current address is held, keeping tx_axis_tdata_o stable.
     assign payload_read_addr_o = ((state == TX_UDP) &&
                                   (output_index >= 11'd42)) ?
-                                  (output_index - 11'd42) : 11'd0;
+                                 ((output_fire && !tx_axis_tlast_o) ?
+                                  (output_index - 11'd41) :
+                                  (output_index - 11'd42)) : 11'd0;
     assign packet_release_o = output_fire && tx_axis_tlast_o &&
                               (state == TX_UDP);
     assign sent_event_o = packet_release_o;

@@ -22,7 +22,7 @@
 
 ## 工程模块树
 
-当前工程存在五个可选顶层，其中 `udp_echo_test_top` 处于激活状态：
+当前工程存在六个可选顶层，其中 `udp_echo_test_top` 处于激活状态：
 
 ```text
 ad9517_clock_manager                        [已验收独立顶层；当前未激活]
@@ -43,10 +43,17 @@ udp_top                                    [已登记的组合展开骨架；当
 │   ├── pcs_pma_sgmii_gtx
 │   └── temac_sgmii_tri_speed + RX/TX Ethernet FIFO
 └── udp_transport_fixed_host            [ARP/IPv4/UDP + 完整载荷槽位]
+    ├── udp_rx_payload_ring              [RX 4 槽、同步 BRAM、提交/回滚]
+    └── udp_tx_payload_ring              [TX 2 槽、同步 BRAM、并行生产/发送]
 
 udp_echo_test_top                           [当前 active top；开发回显外壳]
 ├── udp_top                                 [完整 AD9517 + Ethernet + UDP 系统]
 └── udp_payload_echo                        [透明消费 RX 消息并送回 TX]
+
+udp_perf_diag_top                           [未激活；仅用于 sequence 三边界 ILA 归因]
+├── udp_top + udp_payload_echo              [与回显镜像相同的数据路径]
+├── udp_sequence_order_monitor × 3          [纯旁路：RX frame/RX message/TX frame]
+└── ila_udp_sequence                        [125 MHz，任一倒序触发]
 ```
 
 ## 模块登记
@@ -56,7 +63,8 @@ udp_echo_test_top                           [当前 active top；开发回显外
 | LED | 已实现，可切换为独立顶层 | `led_static` | [`modules/led/MODULE.md`](modules/led/MODULE.md) |
 | M88E1111 MDIO | 已实现，当前由 `led_static` 例化 | `m88e1111_runtime_probe` | [`modules/m88e1111-mdio/MODULE.md`](modules/m88e1111-mdio/MODULE.md) |
 | AD9517 时钟管理 | RTL、仿真、构建和板级验收通过；OUT0 已外部验收为 125 MHz | `ad9517_clock_manager` | [`modules/ad9517/MODULE.md`](modules/ad9517/MODULE.md) |
-| UDP | 固定主机传输 RTL 与回显测试外壳已通过协议仿真、完整展开、许可构建、JTAG 下载及标准 MTU 板级回显 | `ethernet_link_top`、`udp_transport_fixed_host`、`udp_top`、`udp_echo_test_top`（当前激活） | [`modules/udp/MODULE.md`](modules/udp/MODULE.md) |
+| UDP | 固定主机传输 RTL 与回显外壳已通过协议仿真、构建、标准 MTU 回显、十次过载恢复及 797.9 Mbit/s/10 分钟长稳；外部主机发送乱序为已知非阻断缺口 | `ethernet_link_top`、`udp_transport_fixed_host`、`udp_top`、`udp_echo_test_top`（当前激活） | [`modules/udp/MODULE.md`](modules/udp/MODULE.md) |
+| UDP 载荷报文槽环 | RTL、单元/集成仿真、完整展开、构建和板级回显通过；RX 4 槽、TX 2 槽均使用同步 BRAM | `udp_rx_payload_ring`、`udp_tx_payload_ring` | [`modules/udp-payload-ring/MODULE.md`](modules/udp-payload-ring/MODULE.md) |
 
 ## 模块间关系
 
@@ -73,11 +81,17 @@ udp_echo_test_top                           [当前 active top；开发回显外
 - `udp_echo_test_top` 例化 `udp_top + udp_payload_echo`，在不引入产品业务协议的情况下闭合
   RX/TX 消息接口，用于上位机 UDP 回显验收。
 
+### 已形成的 UDP 缓存关系
+
+- `udp_transport_fixed_host` 已例化独立的 `udp_rx_payload_ring` 和 `udp_tx_payload_ring`
+  管理 UDP payload 所有权。RX 默认 4 槽，TX 默认 2 槽；两者采用固定槽环和同步 Block RAM，
+  TEMAC Ethernet FIFO 继续保留。
+
 ### 当前验证状态与尚未完成项
 
 - 上述组合关系已经进入 RTL/XDC，通过 Vivado/XSim 静态展开，并以重新生成的完整许可 TEMAC
   checkpoint 完成 `udp_echo_test_top` 综合、布局、布线和 bitstream；最终
-  `WNS=+0.382 ns`、`WHS=+0.061 ns`，阻断级 DRC 为 0。固定主机 UDP 传输层已按解析、
+  `WNS=+0.614 ns`、`WHS=+0.063 ns`，阻断级 DRC 为 0。固定主机 UDP 传输层已按解析、
   RX 消息槽、TX 消息暂存、帧发送和统计五种所有权拆分，外部接口保持不变。
 - `udp_top.xdc` 当前已启用并作用于 `udp_echo_test_top`；其中包含 DB500 管脚、AD9517 SPI
   时序、reset synchronizer 例外及 125 MHz GTREFCLK 主时钟约束。
@@ -85,6 +99,17 @@ udp_echo_test_top                           [当前 active top；开发回显外
   强制 UDP checksum，并由 `udp_top` 直接消费/驱动 Ethernet FIFO AXI4-Stream。
 - `udp_top` 现在暴露载荷消息接口与调试状态；它们仍是未约束的逻辑端口，在业务模块或专用板级
   测试外壳消费这些端口前，不能直接作为最终 bitstream 顶层。
+- 业务层接入前的 UDP payload 缓存重构已经完成并成为工程基线；RX 4 槽占 2 个 RAMB36，TX
+  2 槽占 1 个 RAMB36。旧 RX/TX 缓存实现已从工程移除。
+- UDP 完整 echo pipeline 已在 125 MHz 字节域按 1 Gb/s 线路节奏完成 64-byte 与 1472-byte
+  payload 各 1000 包的周期效率仿真，分别达到理论 goodput 且零内部 stall/drop/error。真实板级
+  条件已于 2026-09-14 恢复：1472-byte 尽力 offered 达 `956.417 Mbit/s`，过载后降到 100 Mbit/s
+  可全量恢复，但 25 Mbit/s 短包、420 Mbit/s/60 秒长包和 893.2 Mbit/s 高负载均出现少量回包
+  sequence 倒序。开发专用 ILA 已在 TEMAC RX client AXIS、RX message 和 TEMAC TX client AXIS
+  依次捕获完全相同的 `0x5FE,0x600,0x5FF,0x601`，证明 UDP parser、RX/TX 槽环、echo 与 TX
+  engine 都保持了输入顺序；异常位于主机 pktmon/NDIS 发送点之后、FPGA UDP parser 之前，状态为
+  `EXTERNAL_HOST_TX_ORDERING`。该问题作为已知缺口记录，不阻断吞吐、PPS、丢包、内容完整性、
+  过载恢复和长稳测试；当前 ASIX 链路只不承担顺序保证验收。
 
 ## 共享板级资源
 
@@ -106,5 +131,6 @@ UDP 固定端点、强制 checksum、标准 MTU 和 1472-byte 最大载荷均已
 综合、路由时序和 bitstream 均通过。2026-09-11 已使用公司 TEMAC 完整许可重新生成 IP output
 products，并把本次 `udp_echo_test_top.bit` 易失下载到唯一的 `xc7k325t_0`。主机“以太网 2”以
 1 Gbps 建链后，向 `192.168.1.20:32000` 发送的 14、256 和 1472-byte 载荷均从同一端点逐字节
-正确回显，标准 MTU 边界已完成真实链路验收。未来高速图像流的 TX 缓存深度与丢包策略仍作为
-业务接入条件单独收口。
+正确回显，标准 MTU 边界已完成真实链路验收。高速图像流使用的 RX 4 槽/TX 2 槽报文环、
+同步 BRAM、提交/回滚已实现并完成相同的真实链路回归，细节见
+`modules/udp-payload-ring/DEVELOPMENT.md`。

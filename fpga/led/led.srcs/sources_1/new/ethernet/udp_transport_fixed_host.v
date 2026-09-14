@@ -110,8 +110,9 @@ module udp_transport_fixed_host #(
         .drop_reason_o          (rx_drop_reason)
     );
 
-    udp_rx_message_fifo #(
-        .MAX_UDP_PAYLOAD (MAX_UDP_PAYLOAD)
+    udp_rx_payload_ring #(
+        .MAX_UDP_PAYLOAD (MAX_UDP_PAYLOAD),
+        .SLOT_COUNT      (4)
     ) rx_message_fifo_i (
         .clk_i                  (clk_i),
         .resetn_i               (resetn_i),
@@ -129,8 +130,9 @@ module udp_transport_fixed_host #(
         .level_o                (rx_fifo_level_o)
     );
 
-    udp_tx_message_buffer #(
-        .MAX_UDP_PAYLOAD (MAX_UDP_PAYLOAD)
+    udp_tx_payload_ring #(
+        .MAX_UDP_PAYLOAD (MAX_UDP_PAYLOAD),
+        .SLOT_COUNT      (2)
     ) tx_message_buffer_i (
         .clk_i                (clk_i),
         .resetn_i             (resetn_i),

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>UDP echo 回包倒序抓包审计</title>
+<style>body{font:15px/1.55 system-ui,sans-serif;max-width:980px;margin:36px auto;padding:0 20px;color:#182230}h1,h2{color:#102a43}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bcccdc;padding:7px;text-align:left}.fail{color:#b42318;font-weight:700}.warn{color:#b54708;font-weight:700}code,pre{background:#f0f4f8;padding:2px 5px}pre{padding:12px;overflow:auto}</style></head>
+<body><h1>UDP echo 回包倒序抓包审计</h1>
+<p class="fail">结论：抓包确定复现回包 sequence 倒序；根因仍为 INCONCLUSIVE。</p>
+<h2>证据身份</h2><ul><li>capture.pcapng SHA-256: E5240BAEE2A85C839B915B85C91449E797E3CE7AF627AA83CF2AEE1FCEC547DC</li><li>接口：ASIX USB Gigabit，pktmon 12</li><li>范围：192.168.1.20 UDP/32000，UPF1 run 0xE2429B64</li></ul>
+<h2>确定性结果</h2><p>Host→FPGA：551,120 个匹配帧、0 次观测倒序；FPGA→Host：609,106 个匹配帧、94 次观测倒序。pktmon 有漏采，数量不用于丢包率。</p>
+<table><tr><th>方向</th><th>抓包编号</th><th>sequence</th><th>判定</th></tr><tr><td>PC → FPGA</td><td>40863–40866</td><td>65744,65745,65746,65747</td><td>PASS</td></tr><tr><td>FPGA → PC</td><td>40887,40888,40894,40895</td><td>65744,65746,65745,65747</td><td class="fail">FAIL</td></tr></table>
+<h2>关键字节</h2><pre>Packet #40894 FPGA → PC
+55 50 46 31 | E2 42 9B 64 | 00 01 00 D1 | 00 01 66 92 FC B6 53 90
+magic UPF1  | run_id      | seq 65745    | send timestamp, big-endian</pre>
+<h2>边界</h2><p class="warn">pktmon 位于 Windows/网卡侧且存在漏采，不能区分 FPGA TX 路径与 ASIX USB/驱动 ingress。下一步需在 FPGA TX ring/TEMAC AXIS 增加内部观测，或在物理链路使用 TAP/流量仪。</p>
+</body></html>

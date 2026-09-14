@@ -346,6 +346,7 @@ module udp_transport_fixed_host_tb;
     endtask
 
     task send_tx_message_three_bytes;
+        input [7:0] seed;
         begin
             @(negedge clk);
             tx_msg_len   = 11'd3;
@@ -357,7 +358,7 @@ module udp_transport_fixed_host_tb;
             tx_msg_valid = 1'b0;
 
             for (i = 0; i < 3; i = i + 1) begin
-                tx_msg_data       = 8'hA0 + i;
+                tx_msg_data       = seed + i;
                 tx_msg_data_valid = 1'b1;
                 tx_msg_data_last  = (i == 2);
                 @(posedge clk);
@@ -371,6 +372,7 @@ module udp_transport_fixed_host_tb;
     endtask
 
     task verify_captured_udp;
+        input [7:0] seed;
         integer j;
         integer sum;
         integer word_value;
@@ -387,8 +389,8 @@ module udp_transport_fixed_host_tb;
             if ({tx_capture[34],tx_capture[35]} != UDP_PORT ||
                 {tx_capture[36],tx_capture[37]} != UDP_PORT)
                 fail("TX UDP port mismatch");
-            if ((tx_capture[42] != 8'hA0) || (tx_capture[43] != 8'hA1) ||
-                (tx_capture[44] != 8'hA2))
+            if ((tx_capture[42] != seed) || (tx_capture[43] != (seed + 1'b1)) ||
+                (tx_capture[44] != (seed + 2'd2)))
                 fail("TX UDP payload mismatch");
 
             sum = 0;
@@ -499,15 +501,35 @@ module udp_transport_fixed_host_tb;
             fail("ARP sender IP mismatch");
 
         // Application TX produces a complete checksummed UDP frame.
-        send_tx_message_three_bytes;
+        send_tx_message_three_bytes(8'hA0);
         tx_tready = 1'b0;
         repeat (5) @(posedge clk);
         @(negedge clk);
         tx_tready = 1'b1;
         wait_for_tx_frame(2);
-        verify_captured_udp;
+        verify_captured_udp(8'hA0);
         if ((tx_accepted != 1) || (tx_sent != 1))
             fail("TX counters mismatch");
+
+        // The two-slot TX ring accepts a second message while the first frame is
+        // stalled, then backpressures the application until one slot releases.
+        tx_tready = 1'b0;
+        send_tx_message_three_bytes(8'hB0);
+        repeat (5) @(posedge clk);
+        if (!tx_tvalid)
+            fail("First queued TX frame did not reach the stalled output");
+        if (!tx_msg_ready)
+            fail("TX ring did not expose its second slot");
+        send_tx_message_three_bytes(8'hC0);
+        repeat (2) @(posedge clk);
+        if (tx_msg_ready)
+            fail("TX ring did not backpressure when both slots were committed");
+        @(negedge clk);
+        tx_tready = 1'b1;
+        wait_for_tx_frame(4);
+        verify_captured_udp(8'hC0);
+        if ((tx_accepted != 3) || (tx_sent != 3))
+            fail("Two-slot TX counters mismatch");
 
         // Early TLAST is rejected without producing another Ethernet frame.
         @(negedge clk);
@@ -524,7 +546,7 @@ module udp_transport_fixed_host_tb;
         tx_msg_data_valid = 1'b0;
         tx_msg_data_last = 1'b0;
         repeat (5) @(posedge clk);
-        if ((tx_input_error != 1) || (tx_frame_count != 2))
+        if ((tx_input_error != 1) || (tx_frame_count != 4))
             fail("Malformed TX message handling mismatch");
 
         if (rx_udp_accepted != 6)

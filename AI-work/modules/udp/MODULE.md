@@ -1,6 +1,6 @@
 # UDP 固定上位机传输模块
 
-状态：`UDP_ECHO_HARDWARE_ECHO_PASSED`
+状态：`UDP_ECHO_HARDWARE_PERFORMANCE_10MIN_PASS_WITH_KNOWN_REORDER_GAP`
 
 ## 1. 目标、验收语义与边界
 
@@ -120,12 +120,12 @@ TEMAC RX 无 `tready`、过滤坏帧并隔离 tri-speed MAC client 时钟；它�
 125 MHz 数据面的子模块：
 
 ```text
-Ethernet RX AXIS -> fixed_host_rx_parser -> udp_rx_message_fifo -> 业务 RX 消息
+Ethernet RX AXIS -> fixed_host_rx_parser -> udp_rx_payload_ring -> 业务 RX 消息
                          │                        │
                          ├─ ARP reply request    └─ reserve/write/commit 边界
                          └─ RX event/drop reason ───────────────┐
                                                                v
-业务 TX 消息 -> udp_tx_message_buffer -> fixed_host_tx_engine -> Ethernet TX AXIS
+业务 TX 消息 -> udp_tx_payload_ring -> fixed_host_tx_engine -> Ethernet TX AXIS
                          │                    ▲        │
                          └─ 完整载荷/校验和 ──┘        └─ TX event
                                                                │
@@ -135,10 +135,11 @@ Ethernet RX AXIS -> fixed_host_rx_parser -> udp_rx_message_fifo -> 业务 RX 消
 - `fixed_host_rx_parser` 独占 Ethernet/ARP/IPv4/UDP 字段解析、IPv4/UDP checksum 累加与固定端点
   判定。它在载荷到达时向 RX FIFO 输出候选写入，只在帧尾全部检查通过时发出 `commit + length`；
   失败帧只产生分类 drop 事件，候选内容始终不可见。
-- `udp_rx_message_fifo` 独占四槽载荷 RAM、槽长度、读写指针、槽数量和业务 RX 握手。解析器仅查询
+- `udp_rx_payload_ring` 独占四槽同步 BRAM、槽长度、读写指针、槽数量和业务 RX 握手。解析器仅查询
   当前槽是否可用并使用当前候选槽，无法直接修改已提交消息；同周期业务释放允许新帧预留槽位。
-- `udp_tx_message_buffer` 独占单槽 TX RAM和业务 TX 握手，检查 descriptor、长度和 `last`，并在
-  收集载荷时生成 one’s-complement payload sum。只有完整消息才向发送引擎发布。
+- `udp_tx_payload_ring` 独占双槽同步 BRAM 和业务 TX 握手，检查 descriptor、长度和 `last`，并在
+  收集载荷时生成 one’s-complement payload sum。只有完整消息才向发送引擎发布，且可在发送槽 N
+  时并行填充槽 N+1。
 - `fixed_host_tx_engine` 在 ARP 应答和完整 UDP 消息之间仲裁，生成 Ethernet/IPv4/UDP 头、IPv4
   checksum、最终 UDP checksum 和 IP Identification，并在 AXI 反压期间保持输出稳定。
 - `udp_transport_stats` 只接收各功能模块的单周期事件，集中维护饱和计数器和
@@ -147,6 +148,16 @@ Ethernet RX AXIS -> fixed_host_rx_parser -> udp_rx_message_fifo -> 业务 RX 消
 解析器与 RX FIFO 之间的 `rx_commit_udp` 是接收可靠性边界：帧内容可以提前写入当前未提交槽，
 但只有 `rx_commit_udp` 才推进写指针并增加可见消息数。checksum 保持在其数据流所属模块内，不再
 拆出额外有状态流水模块，以免为逐字节数据增加无收益的跨模块反压。
+
+### 4.2 已实施的载荷缓存重构
+
+业务层接入前，RX/TX payload 缓存已按独立设计单元
+[`../udp-payload-ring/MODULE.md`](../udp-payload-ring/MODULE.md) 完成重构。所选结构是固定大小报文
+槽环：RX 默认 4 槽，TX 默认 2 槽；深度 2 的 TX 槽环同时承担乒乓缓存。payload 主存储改为同步
+Block RAM，并通过预取/保持逻辑维持现有业务消息握手。TEMAC RX/TX Ethernet FIFO、FCS 校验/
+生成和三速时钟边界不合并到该设计单元。
+
+新模块已完成单元/协议仿真、完整展开、构建和板级回显回归，并成为当前 RTL 与 bitstream 基线。
 
 ## 5. 启动、复位与链路状态
 
@@ -203,14 +214,15 @@ IPv4、UDP 长度和目的/源端口。UDP checksum 必须非零；模块验证�
 
 | 信号 | 方向 | 约定 |
 |---|---|---|
-| `tx_msg_valid` / `tx_msg_ready` | 输入/输出 | 握手接受一条待发送消息的 `tx_msg_len`；仅在 TX 暂存槽位空闲且链路可发送时 ready |
+| `tx_msg_valid` / `tx_msg_ready` | 输入/输出 | 握手接受一条待发送消息的 `tx_msg_len`；仅在 TX 槽环存在空槽且链路可发送时 ready |
 | `tx_msg_len[LEN_W-1:0]` | 输入 | 本条 UDP 载荷长度，范围 1..`MAX_UDP_PAYLOAD`，在 descriptor 握手时锁存 |
 | `tx_msg_data_valid` / `tx_msg_data_ready` | 输入/输出 | descriptor 成功后传送恰好 `tx_msg_len` 个字节 |
 | `tx_msg_data[7:0]` | 输入 | 待发送 UDP 载荷字节，顺序不变 |
 | `tx_msg_data_last` | 输入 | 必须与第 `tx_msg_len` 个字节同时为 1 |
 | `tx_msg_error` | 输出 | 业务侧早结束、晚结束或长度越界时置位一个周期；该消息不发送 |
 
-发送侧使用一个 `MAX_UDP_PAYLOAD` 暂存槽位。只有长度与 `last` 一致的完整消息才被封装；IP
+当前已验收发送侧使用默认双槽的可参数化 `MAX_UDP_PAYLOAD` 报文环。只有长度与 `last` 一致的
+完整消息才被封装；IP
 Identification 对每个已发送 UDP 数据报递增，IPv4 头校验和与非零 UDP 校验和均由硬件生成。
 若 one’s-complement 运算结果恰为 `16'h0000`，按 UDP 规则在线上发送 `16'hFFFF`，避免与“未使用
 checksum”的零值混淆。发送 IPv4 首部固定 `TTL=64`、`Protocol=17`、`IHL=5`、
@@ -226,6 +238,10 @@ checksum”的零值混淆。发送 IPv4 首部固定 `TTL=64`、`Protocol=17`�
 可靠”承诺的一部分：任何不能交付的帧必须可定位原因，不能仅以 LED 或隐含状态表示。
 
 ## 9. 验证与实施入口
+
+完整的吞吐、包率、突发、丢包和时延测试定义见
+[`PERFORMANCE_TEST_PLAN.md`](PERFORMANCE_TEST_PLAN.md)。当前单包回显通过只代表功能基线，
+不等同于持续线速性能已经验收。
 
 PCS/PMA + TEMAC 链路层不依赖网络地址，可以先行实施。生产用 IP、链路 RTL 和后续 UDP RTL、
 testbench、XDC 必须登记到 `D:\MyFPGAProject\UDP\fpga\led\led.xpr` 和
@@ -254,15 +270,16 @@ AD9517 六场景与 tri-speed 控制回归也均通过。当时组合 XDC 保持
 
 固定端点地址、收发 UDP 32000 端口、标准 MTU 和 1472-byte 最大载荷已进入
 `udp_transport_fixed_host` RTL。该模块已实现 ARP 应答、固定端点 Ethernet II/IPv4/UDP 收发、
-IPv4 首部校验、强制非零 UDP checksum、4 个完整 RX 载荷槽位、单个 TX 暂存槽位和分类
+IPv4 首部校验、强制非零 UDP checksum、4 个完整 RX 载荷槽位、2 个 TX 载荷槽位和分类
 丢包/收发计数器。`udp_top` 已将 Ethernet FIFO AXI4-Stream 收口到该传输层，顶层现在暴露载荷
 消息接口和调试状态，不再把原始 Ethernet 帧作为系统顶层端口。
 
 Vivado/XSim 协议自检已通过：合法奇数长度载荷、1472-byte MTU 边界、固定端点拒绝、零/错误
 UDP checksum、IPv4 分片拒绝、UDP 长度不一致、1473-byte 超长丢弃、4 槽位满保护、ARP 应答、
 TX IPv4/UDP 校验和、TX AXI 反压稳定与业务长度/`last` 错误。包含 AD9517、PCS/PMA、GTX、TEMAC、
-Ethernet FIFO 和 UDP 传输层的 `udp_top` 重新通过完整静态展开。未来高速图像源的反压能力
-仍将决定是否把 TX 从单槽扩展为乒乓或更深缓存。
+Ethernet FIFO 和 UDP 传输层的 `udp_top` 重新通过完整静态展开。高速业务使用的 TX 双槽、RX
+四槽和同步 BRAM 已按 [`../udp-payload-ring/MODULE.md`](../udp-payload-ring/MODULE.md) 实施；
+集成测试额外覆盖两槽填满、第三条消息反压和恢复后的顺序发送。
 
 当前仍没有产品业务模块消费/生产载荷消息，因此 `udp_top` 的逻辑消息端口不是可直接约束到
 板级管脚的最终产品边界。为进行真实链路验收，已增加只用于开发的回显业务外壳，状态见第 10 节。
@@ -275,8 +292,10 @@ Ethernet FIFO 和 UDP 传输层的 `udp_top` 重新通过完整静态展开。�
 - [`ethernet_link_speed_ctrl.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/ethernet_link_speed_ctrl.v)
 - [`udp_transport_fixed_host.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_transport_fixed_host.v)
 - [`fixed_host_rx_parser.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/fixed_host_rx_parser.v)
-- [`udp_rx_message_fifo.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_rx_message_fifo.v)
-- [`udp_tx_message_buffer.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_tx_message_buffer.v)
+- [`udp_rx_payload_ring.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_rx_payload_ring.v)
+- [`udp_tx_payload_ring.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_tx_payload_ring.v)
+- [`udp_rx_payload_ring_tb.v`](../../../fpga/led/led.srcs/sim_1/new/udp_rx_payload_ring_tb.v)
+- [`udp_tx_payload_ring_tb.v`](../../../fpga/led/led.srcs/sim_1/new/udp_tx_payload_ring_tb.v)
 - [`fixed_host_tx_engine.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/fixed_host_tx_engine.v)
 - [`udp_transport_stats.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_transport_stats.v)
 - [`udp_transport_fixed_host_tb.v`](../../../fpga/led/led.srcs/sim_1/new/udp_transport_fixed_host_tb.v)
@@ -287,6 +306,7 @@ Ethernet FIFO 和 UDP 传输层的 `udp_top` 重新通过完整静态展开。�
 - [`check_udp_top_elaboration.tcl`](../../../fpga/led/scripts/check_udp_top_elaboration.tcl)
 - [`check_udp_echo_top_elaboration.tcl`](../../../fpga/led/scripts/check_udp_echo_top_elaboration.tcl)
 - [`run_udp_transport_sim.tcl`](../../../fpga/led/scripts/run_udp_transport_sim.tcl)
+- [`run_udp_payload_ring_sim.tcl`](../../../fpga/led/scripts/run_udp_payload_ring_sim.tcl)
 - [`run_udp_echo_sim.tcl`](../../../fpga/led/scripts/run_udp_echo_sim.tcl)
 - [`build_udp_echo.tcl`](../../../fpga/led/scripts/build_udp_echo.tcl)
 - [`program_udp_echo.tcl`](../../../fpga/led/scripts/program_udp_echo.tcl)
@@ -313,15 +333,17 @@ RX 槽位，直到 `last`。任何 TX 反压都直接传递给 RX 消息接口�
   Ethernet IP 的静态展开。
 - 使用公司 TEMAC 完整许可重新生成 IP output products 后，组合顶层已完成综合、布局、布线和
   bitstream。补齐官方 example design 同类的 reset synchronizer `ASYNC_REG` 属性、异步 PRE
-  false-path 及 125 MHz GTREFCLK 主时钟约束后，最终 `WNS=+0.382 ns`、`WHS=+0.061 ns`、
+  false-path 及 125 MHz GTREFCLK 主时钟约束后，最终 `WNS=+0.614 ns`、`WHS=+0.063 ns`、
   未布线网络为 0，且所有用户时序约束满足；阻断级 DRC 为 0。
-- 路由后 DRC 没有 Error 或 Critical Warning。仍有 6 个 `REQP-1839` Warning，全部位于复制自
-  TEMAC 官方 example design 的 RX/TX Ethernet FIFO：异步置位的复位同步器最终控制 RAMB36
-  enable/reset。复位期间 FIFO 内容本就作废，但该告警保留为后续工程质量审查项，不静默豁免。
+- 路由后 DRC 没有 Error 或 Critical Warning。`REQP-1839` Warning 包含 TEMAC 官方 FIFO 的
+  异步复位控制，以及新 RX BRAM 地址/使能受同一异步复位来源间接影响；复位期间缓存内容本就
+  作废，但该告警保留为后续复位质量审查项，不静默豁免。
+- 层次利用率报告确认 RX 槽环使用 2 个 RAMB36、TX 槽环使用 1 个 RAMB36；整个设计共使用
+  5 个 RAMB36，payload 主存储不再使用大容量 Distributed RAM。
 - 本次 bitstream 为
   `D:/MyFPGAProject/UDP/fpga/led/led.runs/impl_udp_echo/udp_echo_test_top.bit`，生成时间
-  `2026-09-11 16:01:17`，SHA-256 为
-  `5FB1FA973DBC08284E13826FBB4C453934B0EDA28F4E8EDD9FA0847B9144B1DF`。
+  `2026-09-11 23:09:59`，SHA-256 为
+  `29FBF09792054768623AFADFF85FAF364E528B0DDAE1AC74F7B55914223C1619`。
 - `program_udp_echo.tcl` 已将上述精确镜像易失下载到唯一 JTAG 目标
   `localhost:3121/xilinx_tcf/Digilent/E3077BAA4210` 的 `xc7k325t_0`；该回显镜像不含 ILA/VIO，
   下载前清除了旧 probes 关联，下载结果为 `UDP_ECHO_PROGRAM_PASSED`。
@@ -330,14 +352,72 @@ RX 槽位，直到 `last`。任何 TX 反压都直接传递给 RX 消息接口�
   `192.168.1.20:32000` 原样返回，源端点和逐字节内容全部匹配，结果为
   `UDP_ECHO_HOST_TEST_PASSED`。这证明标准 MTU 最大 UDP 载荷已经穿过真实 PHY/SGMII/PCS/PMA、
   TEMAC、Ethernet FIFO 和本传输层完成一次端到端闭环。
-- 本次重构后的可复查证据为 `logs/udp_refactor_transport_sim_20260911_154933.log`、
-  `logs/udp_refactor_top_elab_20260911_155015.log`、
-  `logs/udp_refactor_echo_elab_20260911_155422.log`、
-  `logs/udp_refactor_build_20260911_155843.log`、
-  `logs/udp_refactor_program_20260911_160158.log` 和
-  `logs/udp_refactor_host_test_20260911_160226.log`；路由报告位于
+- 本次槽环重构的可复查证据为 `logs/udp_payload_ring_final_sim_20260911_231657.log`、
+  `logs/udp_transport_ring_20260911_225814.log`、`logs/udp_echo_ring_20260911_225848.log`、
+  `logs/udp_top_ring_elab_20260911_225926.log`、
+  `logs/udp_echo_top_ring_elab_20260911_230328.log`、
+  `logs/udp_echo_ring_build_20260911_230739.log` 和
+  `logs/udp_echo_ring_program_20260911_231023.log`；路由与层次资源报告位于
   `led.runs/impl_udp_echo/reports/`。
 
 当前 `sources_1` active top 为 `udp_echo_test_top`，`udp_top.xdc` 已启用；`sim_1` 仍保持
 `ad9517_clock_manager_tb`。这次切换只服务下一步板级 UDP 回显测试，不改变已验收的 AD9517
 独立顶层源码和验收结论。
+
+### 10.2 性能验证进展（2026-09-12）
+
+- 新增 `udp_echo_pipeline_perf_tb`，在 125 MHz MAC-client 字节域对完整
+  `udp_transport_fixed_host + udp_payload_echo` 闭环施加 1 Gb/s 线路节奏。RX 输入和 TX ready
+  模型都计入 MAC-client AXIS 不可见的 preamble/SFD、FCS 和 IFG 共 24 byte-time。
+- 64-byte payload 连续 1000 包时，RX/TX 模型 goodput 均为 `492.399 Mbit/s`；1472-byte payload
+  连续 1000 包时均为 `957.102 Mbit/s`。两轮均为 `rx_stalls=0`、`max_rx_level=1`、零 drop/error，
+  接收和发送计数最终均为 2000，结果为 `UDP_ECHO_PIPELINE_PERF_PASSED`。
+- 该结果证明 parser/checksum、RX 4 槽、echo、TX 2 槽和 TX engine 在周期级具备线速能力；它不
+  包含真实 TEMAC FIFO、PCS/PMA、PHY、网卡和 Windows 软件栈，不能替代板级性能数据。
+- 主机性能脚本 `scripts/test_udp_performance.py` 已通过静态检查、内部算法自检和本机 UDP 回显
+  闭环。真实板级预检查因固定 MAC 对应的 ASIX“以太网 2”处于 `Disconnected / 0 bps` 而停止；
+  当前单包回显实际超时。只读 JTAG inventory 能发现原 Digilent target，但其下没有任何 FPGA
+  device，Vivado 报告 `No devices detected`，因此未执行重新下载；这些结果只表示板卡供电或外部
+  连接条件不成立，不判定 FPGA 失败。
+- 完整测试结果、日志身份和恢复板级测试的前置条件见
+  [`PERFORMANCE_TEST_PLAN.md`](PERFORMANCE_TEST_PLAN.md) 第 11 节。
+
+### 10.3 真实板级性能探索（2026-09-14）
+
+- 外部条件恢复后，已核对 ASIX 1 Gbps 链路、固定 MAC/IP、唯一 JTAG target/device 和既有 echo
+  bitstream SHA-256，并重新下载该无 ILA/VIO 镜像；下载前后单包回显均通过。
+- COMB-01 的 20/256/1472-byte 各 1000 包全部通过，loss/duplicate/reorder/corrupt 均为 0。
+- 1472-byte 尽力发送实际达到 `956.417 Mbit/s` payload（`999.300 Mbit/s` wire-equivalent）；
+  受控 900 Mbit/s 点实际达到 `893.193 Mbit/s`，758,488 包全部回收且无丢包/重复/损坏，但记录
+  到 122 次回包倒序。
+- 倒序可在不同包长和速率下复现：64-byte 25 Mbit/s/10 秒出现 2 次；1472-byte
+  420 Mbit/s/60 秒出现 5 次。低速 64-byte 20 Mbit/s/10 秒和 1472-byte 400 Mbit/s/10 秒无错，
+  但不视为长期无错上限。
+- pktmon 过滤抓包在对应输入窗口看到 Host→FPGA sequence 有序、FPGA→Host sequence 倒序；回包
+  IPv4 Identification 又证明倒序已存在于 TX engine 分配 IP ID 之前。后续开发专用 ILA 在
+  TEMAC RX client AXIS、RX message 和 TEMAC TX client AXIS 三点同时观察到相同的
+  `0x5FE,0x600,0x5FF,0x601`，首次倒序在最前端 RX 边界已经出现。因此 parser、RX ring、echo、
+  TX ring 和 TX engine 均保持输入顺序，工程归因为 `EXTERNAL_HOST_TX_ORDERING`，而不是 UDP RTL
+  重排；外部细分优先排查 ASIX USB 网卡的 NDIS/offload/USB 发送路径。
+- 1472-byte、请求 900 Mbit/s 的 60 秒持续轮实际达到 `888.974 Mbit/s`，4,529,421 包全部回收，
+  loss/duplicate/corrupt 为 0；因实际 offered 未到 900 Mbit/s，该轮证明的是约 889 Mbit/s
+  稳定性，不是精确 900 Mbit/s 发生能力。
+- burst 1/2/4/6/8/16/64 的七个 10 秒轮次均无 loss/duplicate/corrupt；实际 offered 随 burst
+  从 `769.450` 提升到 `895.872 Mbit/s`，未观察到受控突发造成半包、拼包或停滞。
+- 已完成十次“尽力过载 10 秒 → 100 Mbit/s 恢复 10 秒”。过载段每轮主机可见缺失 45～47 包且
+  均无内容损坏；十个恢复段各 84,919 包，loss/duplicate/reorder/corrupt 全为 0，证明重复过载
+  后均能自动恢复且无累积死锁。
+- COMB-04 首轮 10 分钟长稳实际 offered/received 为 `797.895/797.894 Mbit/s`，40,653,617 包
+  全部回收，loss/duplicate/corrupt 为 0，记录已知外部 reorder 2634 次，判定为
+  `PASS_WITH_KNOWN_REORDER_GAP`。该轮覆盖大量槽环指针回绕且未出现停流。
+- 板级矩阵、原始 JSON/CSV 和抓包报告见
+  [`PERFORMANCE_TEST_PLAN.md`](PERFORMANCE_TEST_PLAN.md) 第 12 节及
+  [`packet-audit/20260914-udp-echo-reorder/REPORT.md`](../../reports/packet-audit/20260914-udp-echo-reorder/REPORT.md)。
+- 诊断镜像实现结果为 `WNS=+0.327 ns`、`WHS=+0.056 ns`、阻断级 DRC 0；捕获结束后已经恢复
+  无 ILA/VIO 的原 echo bitstream，并重新通过 14、256、1472-byte 单包回显。
+- 已归因的外部 sequence 乱序作为已知缺口报告，不再阻断后续吞吐、PPS、丢包、内容完整性、
+  过载恢复和长稳测试；这些测试显式采用 `PASS_WITH_KNOWN_REORDER_GAP` 结果类别。它仍不能被
+  忽略为“有序”，也不能用当前 ASIX 链路完成顺序保证验收。
+- 本轮继续测试共 29 轮、提交 59,293,060 包；463 个主机可见缺失全部发生在允许丢包的十次
+  尽力过载段，其他轮次 loss/duplicate/corrupt 均为 0。正式 30 分钟长稳、精确 900 Mbit/s
+  发生能力和独立顺序验收仍待完成；详细数据见性能计划第 12.7 节。

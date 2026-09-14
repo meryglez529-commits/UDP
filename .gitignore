@@ -30,6 +30,10 @@ webtalk*.xml
 usage_statistics_webtalk.*
 NA
 
+# Python bytecode generated while checking host-side test tools.
+__pycache__/
+*.pyc
+
 # A GUI-created Vivado project keeps the same generated folders below its
 # project directory (for example fpga/led/led.runs/).  Keep them locally for
 # normal GUI, simulation and ILA use, but version only their source inputs.
@@ -63,3 +67,9 @@ AI-work/**/work/*
 !AI-work/**/work/.artifact_start
 AI-work/**/out/*
 !AI-work/**/out/.gitkeep
+
+# Packet-audit source captures can be hundreds of megabytes.  Keep the raw
+# ETL/pcap data local; version the report, hashes, and extracted JSON/CSV.
+AI-work/reports/**/*.etl
+AI-work/reports/**/*.pcap
+AI-work/reports/**/*.pcapng

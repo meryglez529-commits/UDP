@@ -72,7 +72,18 @@ module udp_top #(
     output wire [31:0] rx_drop_fifo_full_o,
     output wire [31:0] tx_accepted_o,
     output wire [31:0] tx_sent_o,
-    output wire [31:0] tx_input_error_o
+    output wire [31:0] tx_input_error_o,
+
+    // Passive observation points for development-only diagnostics.  These
+    // signals never participate in ready/valid control.
+    output wire [7:0]  debug_rx_axis_tdata_o,
+    output wire        debug_rx_axis_tvalid_o,
+    output wire        debug_rx_axis_tready_o,
+    output wire        debug_rx_axis_tlast_o,
+    output wire [7:0]  debug_tx_axis_tdata_o,
+    output wire        debug_tx_axis_tvalid_o,
+    output wire        debug_tx_axis_tready_o,
+    output wire        debug_tx_axis_tlast_o
 );
 
     // AA3 is shared by the AD9517 controller and the Ethernet independent-
@@ -194,5 +205,14 @@ module udp_top #(
         .tx_sent_o               (tx_sent_o),
         .tx_input_error_o        (tx_input_error_o)
     );
+
+    assign debug_rx_axis_tdata_o  = ethernet_rx_tdata;
+    assign debug_rx_axis_tvalid_o = ethernet_rx_tvalid;
+    assign debug_rx_axis_tready_o = ethernet_rx_tready;
+    assign debug_rx_axis_tlast_o  = ethernet_rx_tlast;
+    assign debug_tx_axis_tdata_o  = ethernet_tx_tdata;
+    assign debug_tx_axis_tvalid_o = ethernet_tx_tvalid;
+    assign debug_tx_axis_tready_o = ethernet_tx_tready;
+    assign debug_tx_axis_tlast_o  = ethernet_tx_tlast;
 
 endmodule

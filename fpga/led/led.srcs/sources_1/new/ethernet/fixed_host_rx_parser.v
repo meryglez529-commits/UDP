@@ -2,7 +2,7 @@
 
 // Fixed-host Ethernet II / ARP / IPv4 / UDP receive parser.
 // Payload writes are speculative; commit_o is the only signal that makes a
-// candidate payload visible through udp_rx_message_fifo.
+// candidate payload visible through udp_rx_payload_ring.
 module fixed_host_rx_parser #(
     parameter [47:0] LOCAL_MAC        = 48'h02_DB_50_00_00_01,
     parameter [31:0] LOCAL_IPV4       = 32'hC0A8_0114,
