@@ -83,6 +83,7 @@ module udp_perf_diag_top (
         .HOST_UDP_PORT  (16'd32000)
     ) udp_system_i (
         .sys_clk_i                   (sys_clk_i),
+        .comm_soft_resetn_i          (1'b1),
         .led1                        (led1),
         .pll_cs_n_o                  (pll_cs_n_o),
         .pll_sclk_o                  (pll_sclk_o),
@@ -98,6 +99,7 @@ module udp_perf_diag_top (
         .sgmii_rxp_i                 (sgmii_rxp_i),
         .sgmii_rxn_i                 (sgmii_rxn_i),
         .link_clock_125m_o           (link_clock_125m),
+        .comm_base_resetn_o          (),
         .clock_200m_locked_o         (),
         .ad9517_clock_ready_o        (),
         .ad9517_pll_locked_o         (),

@@ -37,6 +37,15 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sources_1 new ethernet udp_transport_fixed_host.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_payload_echo.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_sequence_order_monitor.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_rx_decoder.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_window.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_reg_executor.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_rsp_select.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_tx_encoder.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_stats.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_watchdog.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_udp_control.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_test_reg_bank.v] \
         [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_bram_tdp.v] \
         [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_config_vector_sm.v] \
         [file join $project_dir led.srcs sources_1 new ethernet temac_sgmii_tri_speed_fifo_block.v] \
@@ -49,6 +58,8 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sources_1 new udp_top.v] \
         [file join $project_dir led.srcs sources_1 new udp_echo_test_top.v] \
         [file join $project_dir led.srcs sources_1 new udp_perf_diag_top.v]]
+    lappend rtl_files \
+        [file join $project_dir led.srcs sources_1 new udp_control_test_top.v]
     set ip_files [list \
         [file join $project_dir led.srcs sources_1 ip ila_led ila_led.xci] \
         [file join $project_dir led.srcs sources_1 ip ila_mdio ila_mdio.xci] \
@@ -74,6 +85,10 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sim_1 new udp_payload_echo_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_echo_pipeline_perf_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_sequence_order_monitor_tb.v]]
+    lappend sim_files \
+        [file join $project_dir led.srcs sim_1 new db500_udp_control_tb.v] \
+        [file join $project_dir led.srcs sim_1 new db500_ctrl_watchdog_tb.v] \
+        [file join $project_dir led.srcs sim_1 new db500_ctrl_watchdog_integration_tb.v]
 
     foreach path $rtl_files { led_require_file RTL $path }
     foreach path $ip_files { led_require_file IP $path }

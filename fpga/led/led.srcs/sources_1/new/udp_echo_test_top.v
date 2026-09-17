@@ -24,7 +24,7 @@ module udp_echo_test_top (
 );
 
     wire        link_clock_125m;
-    wire        link_ready;
+    wire        comm_resetn;
     wire        rx_msg_valid;
     wire        rx_msg_ready;
     wire [7:0]  rx_msg_data;
@@ -48,6 +48,7 @@ module udp_echo_test_top (
         .HOST_UDP_PORT  (16'd32000)
     ) udp_system_i (
         .sys_clk_i              (sys_clk_i),
+        .comm_soft_resetn_i     (1'b1),
         .led1                   (led1),
         .pll_cs_n_o             (pll_cs_n_o),
         .pll_sclk_o             (pll_sclk_o),
@@ -63,12 +64,14 @@ module udp_echo_test_top (
         .sgmii_rxp_i            (sgmii_rxp_i),
         .sgmii_rxn_i            (sgmii_rxn_i),
         .link_clock_125m_o      (link_clock_125m),
+        .comm_base_resetn_o     (),
+        .comm_resetn_o          (comm_resetn),
         .clock_200m_locked_o    (),
         .ad9517_clock_ready_o   (),
         .ad9517_pll_locked_o    (),
         .ad9517_error_o         (),
         .ad9517_error_code_o    (),
-        .link_ready_o           (link_ready),
+        .link_ready_o           (),
         .link_speed_o           (),
         .pcs_status_o           (),
         .rx_msg_valid_o         (rx_msg_valid),
@@ -102,7 +105,7 @@ module udp_echo_test_top (
 
     udp_payload_echo echo_i (
         .clk_i               (link_clock_125m),
-        .resetn_i            (link_ready),
+        .resetn_i            (comm_resetn),
         .rx_msg_valid_i      (rx_msg_valid),
         .rx_msg_ready_o      (rx_msg_ready),
         .rx_msg_data_i       (rx_msg_data),

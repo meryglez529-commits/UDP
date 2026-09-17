@@ -2,6 +2,9 @@
 
 状态：`UDP_ECHO_HARDWARE_PERFORMANCE_10MIN_PASS_WITH_KNOWN_REORDER_GAP`
 
+设计进展（2026-09-17）：DATA 双通道与 Jumbo 扩展进入设计阶段，尚未修改 RTL 或重新验收。
+下文已实现能力仍对应标准 MTU、单端口基线；新增方案见第 7.4 节和用户通信架构文档。
+
 ## 1. 目标、验收语义与边界
 
 本设计为 DB500 板提供一个面向**唯一固定上位机**的千兆以太网 UDP 传输层。它接收、校验、
@@ -44,7 +47,7 @@ UDP/IP 没有确认、重传、顺序或端到端送达保证，因此本模块�
 | 以太网 IP | 两个独立 AMD/Xilinx 官方 IP：`gig_ethernet_pcs_pma` 和 `tri_mode_ethernet_mac`；不采用 AXI Ethernet Subsystem |
 | 链路速率 | 已批准完整支持 10/100/1000 Mb/s；M88E1111 铜口与 SGMII 均保留自动协商 |
 | 固定数据面时钟 | PCS/PMA 的 125 MHz `userclk2` 送给 TEMAC `gtx_clk`，并作为 Ethernet FIFO 用户侧与 UDP 传输层时钟；TEMAC MAC client 低速时钟由 IP 内部管理 |
-| 以太网 MTU | 首版固定为标准 MTU 1500；不启用 Jumbo，不支持 IPv4 分片/重组，单个 UDP 载荷最大 1472 字节 |
+| 以太网 MTU | 当前已实现 MTU 1500、UDP payload 最大 1472 字节；新阶段设计 MTU9000/payload8972，覆盖原工程默认8172，尚未启用及验证；继续不支持 IPv4 分片/重组 |
 
 两个 Ethernet IP 的 Vivado 2021.1 能力、官方 example design、接口与集成注意事项见
 [`ETHERNET_IP_RESEARCH.md`](ETHERNET_IP_RESEARCH.md)。该调研记录不替代本文件中的最终设计；
@@ -228,6 +231,88 @@ Identification 对每个已发送 UDP 数据报递增，IPv4 头校验和与非�
 checksum”的零值混淆。发送 IPv4 首部固定 `TTL=64`、`Protocol=17`、`IHL=5`、
 `DF=1`、`MF=0`、分片偏移为零，不产生 IP Options。
 
+### 7.3 首个用户通信消费者
+
+CONTROL 先行阶段没有改变本模块的消息契约：端口 32000、唯一一组 RX/TX 完整消息接口、
+RX 4 槽和 TX 2 槽均保持不变。`udp_control_test_top` 已把这一组接口全部连接到
+`db500_udp_control`，现有 `udp_echo_test_top` 继续作为独立回归基线。
+
+CONTROL 接入已经在 `udp_top` 分离基础复位和软通信复位：
+`comm_base_resetn_o = link_user_resetn && link_ready_o`，
+`comm_resetn_o = comm_base_resetn_o && comm_soft_resetn_i`。CONTROL watchdog 的软复位只清空 UDP
+transport、CONTROL 和外部寄存器适配器事务状态，不接管 Ethernet client FIFO。500 ms 静默
+跨代已完成板级验证；主机网卡软件禁用/启用不再作为恢复机制。
+
+当前 RTL 尚未加入 DATA 接口。DATA 已进入设计阶段，计划按目的 UDP 端口扩展独立逻辑
+通道和完整报文级 TX 仲裁；该扩展不得使 UDP 层解释 CONTROL 字段，也不得改变已经冻结的
+CONTROL 报文和寄存器接口。详细规划见
+[`../db500-udp-control/MODULE.md`](../db500-udp-control/MODULE.md) 和
+[`../db500-udp-application/MODULE.md`](../db500-udp-application/MODULE.md)。
+
+### 7.4 DATA 双通道与 Jumbo 改造提案（未实施）
+
+DATA 只承接业务组好的 payload；原工程图像模块输出的 12-Byte 业务头也是透明内容。
+图像/RTM 仲裁、图像分包、业务序号、重组和补传不进入本层。DATA 在文档上独立，实现以本层扩展为主，
+不强制增加 `db500_udp_data.v`；接口、请求/结果管理与具体接入方案见
+[DATA MODULE.md](../db500-udp-data/MODULE.md) 第 3～9 节；业务提交完成与缓存释放边界见本层第 7.5 节，
+通道集成、仲裁和复位隔离见用户通信架构 MODULE.md。
+
+本设计单元的具体工作：
+
+- `udp_top/udp_transport_fixed_host`：暴露 CONTROL/DATA 独立消息接口和配置，继续共享网络引擎；
+  CONTROL 保持端口 32000，DATA 本地/主机端口设计默认均为 32001，可综合期配置，不复制整套协议栈。
+  DATA 使用 RX/TX 各 32 KiB 字节环和各 16 条描述符；CONTROL 固定小记录队列单独收敛。
+- `fixed_host_rx_parser`：在 UDP 头阶段按配置端口锁定目标通道，在该通道预留整包字节及描述符，帧尾只向
+  正确通道 commit/abort；DATA 资源不足时排空该帧，不阻塞后续 CONTROL。按通道统计丢弃。
+  当前在帧首锁存唯一 slot_available 的行为必须调整到端口/长度已取得、payload 尚未开始时。
+- 发送仲裁与 `fixed_host_tx_engine`：只选择完整报文，锁定端口、长度、checksum 与来源直到帧尾；
+  CONTROL 有界优先，竞争时连续额度建议 4 帧，随后让出一次给 ARP/DATA 轮询；无竞争时不留空额度。
+  完整选择算法见 DATA MODULE.md 第 10.3 节，最终额度经并发验证确定。
+  建议将现有 engine 内 ARP/UDP 选择收敛到独立小型帧仲裁器，由一次 descriptor 握手启动 engine，
+  避免外部双通道仲裁与内部 ARP 优先级各自拥有一套调度状态。
+- DATA 交付完成：完整包通过长度/last 检查并提交 TX 队列即成功；不继承原 TEMAC 完成定义。
+  不增加逐帧来源/token 跟踪与业务 MAC 完成回传。当前 sent_event/packet_release 仍用于后续
+  帧复制进 Ethernet FIFO 时的内部释放和统计，不等同于更早的业务包提交。
+- DATA checksum 配置：RX_REQUIRE_UDP_CHECKSUM 与 TX_UDP_CHECKSUM_ENABLE 为独立综合期参数，
+  在 DATA 配置中均默认 1；不改变 CONTROL 当前强制校验规则。参数语义见 DATA MODULE.md 第 5.3 节。
+- 出口排队：后到 CONTROL 正常排在已选中/已进入 Ethernet FIFO 的帧后面；优先级仅作用于当前待选帧。
+  首版由 FIFO 容量及 ready/valid 反压约束积压，不额外设在途帧额度，不等 MAC 发完上一帧再仲裁。
+  正常排队下的 CONTROL 延迟需结合 Jumbo、吞吐及三速条件验证。
+- CONTROL 软复位：不能继续清空整个公共 transport；仅取消 CONTROL 事务和未发送队列。
+  已选中的 CONTROL 帧需保留有效数据直到安全收尾，已排入公共出口的旧帧正常排空；DATA 和公共
+  parser/engine/FIFO 保持运行，DATA 活动不刷新 CONTROL watchdog。
+
+Jumbo 当前实际改造点：`udp_top`、transport、parser、TX engine 和 ring 存在固定 `[10:0]`
+长度/索引，需按 payload 与完整帧分别推导宽度；超限帧计数不得回绕。现有 MAC 配置向量将
+`tx_jumbo_enable/rx_jumbo_enable` 固定为 0；RX/TX client FIFO 及其 RAM 为 4096 Byte，需一起
+扩展并验证指针、空满、回滚、帧计数和跨域路径，不能只放大 UDP payload 槽。
+
+配置以 IP MTU 为统一口径，当前固定 IPv4 头下 `MAX_DATA_PAYLOAD = IP_MTU - 28`；业务头计入
+payload，不额外扣除不存在的 DATA 公共头。已明确至少兼容原工程默认 8172-byte payload，
+对应 IP 总长度 8200、MAC client 帧不含 FCS 8214、含 FCS 8218 Byte。它不是全模式最大值，
+本版设计 MTU9000/payload8972，FPGA 能力待验证；当前主机只读查询确认 JumboPacket=9KB、IPv4 NlMtu=9000，
+查询时未连接，尚未验证 Jumbo 通路。原工程证据和主机设置维护在 DATA MODULE.md 第 3 节。
+默认完整帧已超过 8192 Byte，Ethernet 整帧 FIFO 不能仅扩成 8 KiB；帧计数至少 14 bit，
+Ethernet RX/TX FIFO 首版各按 16 KiB 目标设计，需验证最大帧长、控制预留空间、位宽及跨域逻辑。当前不承诺 Jumbo 已可用。
+不增加 IP 分片，超大业务包明确拒绝，业务按公布的上限自行组包。
+
+### 7.5 业务交付完成与缓存释放（新通道提案）
+
+DATA 业务完成定义为：payload 已完整收齐、长度/last 检查通过，并成功提交 TX 队列。
+建议接口以 packet_committed/status 表达，不继承原工程 tx_data_done 到 TEMAC 的含义。
+请求许可、包提交和缓存释放是不同事件；完成通知不能令仍待网络发送的数据提前释放。
+
+当前 fixed_host_tx_engine.sent_event_o 在帧尾进入 Ethernet FIFO 时产生，可以继续用于
+payload 存储释放和现有 tx_sent 统计；新增提交计数明确记录 commit，不默默改变旧统计语义。
+
+不再为业务完成建立逐帧 token/来源记录、MAC 完成 CDC 或多请求结果排序队列。
+每条通道的收包状态在提交或输入失败时产生本地状态，可在状态未消费时反压下一条请求。
+已提交包后续因链路故障被丢弃，通过链路状态和错误/丢弃计数报告，不撤回已成立的本地交付完成。
+对端收到与否由外部协议处理。
+
+Ethernet FIFO overflow 等状态仍应可观测，FIFO 自身跨域空满控制保持正确；首版不额外增加
+用于调度额度的 MAC 消费计数或逐包完成跟踪。对端可靠交付与本地队列提交不是同一承诺。
+
 ## 8. 可观测性与错误处理
 
 以下计数器在 125 MHz 域饱和计数，通过同步快照供 ILA/软件读取：`rx_frames_seen`、
@@ -258,7 +343,8 @@ PCS/PMA+TEMAC 的构建时序检查和真实上位机链路测试。
 RX/TX Ethernet FIFO。控制器行为仿真覆盖 1000M 首次协商、掉线、100M/10M 重协商、半双工
 拒绝和保留速率拒绝；Clocking Wizard 自检确认 100 MHz 输入下 `locked` 正常且输出周期为
 5.000 ns。完整 Clocking Wizard+PCS/PMA+TEMAC+FIFO 顶层已通过 Vivado/XSim 编译与静态展开。该段
-记录描述当时的 AD9517 验收基线；当前 active top 已按本节后文切换到 UDP 回显测试顶层。
+记录描述当时的 AD9517 验收基线；当前 active top 已在后续 CONTROL 集成中切换为
+`udp_control_test_top`，UDP 回显顶层仍保留为回归入口。
 
 2026-09-11 已新增并登记 `udp_top` 与 `udp_top.xdc`。组合顶层实际例化
 `ad9517_clock_manager + ethernet_link_top`，将合格的 `clock_ready_o` 接入链路复位边界，并把
@@ -301,6 +387,7 @@ Ethernet FIFO 和 UDP 传输层的 `udp_top` 重新通过完整静态展开。�
 - [`udp_transport_fixed_host_tb.v`](../../../fpga/led/led.srcs/sim_1/new/udp_transport_fixed_host_tb.v)
 - [`udp_payload_echo.v`](../../../fpga/led/led.srcs/sources_1/new/ethernet/udp_payload_echo.v)
 - [`udp_echo_test_top.v`](../../../fpga/led/led.srcs/sources_1/new/udp_echo_test_top.v)
+- [`udp_control_test_top.v`](../../../fpga/led/led.srcs/sources_1/new/udp_control_test_top.v)
 - [`udp_payload_echo_tb.v`](../../../fpga/led/led.srcs/sim_1/new/udp_payload_echo_tb.v)
 - [`create_ethernet_ips.tcl`](../../../fpga/led/scripts/create_ethernet_ips.tcl)
 - [`check_udp_top_elaboration.tcl`](../../../fpga/led/scripts/check_udp_top_elaboration.tcl)

@@ -1,0 +1,50 @@
+{
+  "overall_verdict": "PASS",
+  "packet_count": 23,
+  "pass_count": 23,
+  "fail_count": 0,
+  "request_count": 11,
+  "response_count": 12,
+  "request_arrival_order": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    5,
+    8,
+    6,
+    9,
+    9,
+    10
+  ],
+  "response_order": [
+    1,
+    2,
+    3,
+    4,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    9,
+    10
+  ],
+  "duplicate_request_ids": [
+    9
+  ],
+  "replayed_response_ids": [
+    4,
+    9
+  ],
+  "request_ids_without_response": [],
+  "findings": [
+    "All captured UDP payloads conform to the current 16-byte CONTROL V1 byte map.",
+    "Requests 7,5,8,6 arrived out of order; responses were emitted in execution order 5,6,7,8.",
+    "SET request 9 was retransmitted unchanged and received an identical replay response.",
+    "Response IDs 4 and 9 appear more than once; duplicate responses are legal replay output and retain identical fields.",
+    "QUERY 10 returned write_count=4, proving retransmitted SET 9 did not execute twice."
+  ]
+}

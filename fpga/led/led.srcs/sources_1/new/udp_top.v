@@ -17,6 +17,7 @@ module udp_top #(
     parameter [15:0] HOST_UDP_PORT  = 16'd32000
 ) (
     input  wire        sys_clk_i,
+    input  wire        comm_soft_resetn_i,
 
     output wire        led1,
     output wire        pll_cs_n_o,
@@ -35,6 +36,8 @@ module udp_top #(
     input  wire        sgmii_rxn_i,
 
     output wire        link_clock_125m_o,
+    output wire        comm_base_resetn_o,
+    output wire        comm_resetn_o,
     output wire        clock_200m_locked_o,
     output wire        ad9517_clock_ready_o,
     output wire        ad9517_pll_locked_o,
@@ -131,6 +134,9 @@ module udp_top #(
     wire        ethernet_tx_tready;
     wire        ethernet_tx_tlast;
 
+    assign comm_base_resetn_o = link_user_resetn && link_ready_o;
+    assign comm_resetn_o = comm_base_resetn_o && comm_soft_resetn_i;
+
     ethernet_link_top ethernet_link_i (
         .reset_i             (1'b0),
         .clock_ready_i       (ad9517_clock_ready_o),
@@ -167,7 +173,7 @@ module udp_top #(
         .MAX_UDP_PAYLOAD (1472)
     ) udp_transport_i (
         .clk_i                   (link_clock_125m_o),
-        .resetn_i                (link_user_resetn),
+        .resetn_i                (comm_resetn_o),
         .link_ready_i            (link_ready_o),
         .rx_axis_tdata_i         (ethernet_rx_tdata),
         .rx_axis_tvalid_i        (ethernet_rx_tvalid),

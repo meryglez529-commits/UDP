@@ -73,3 +73,7 @@ AI-work/**/out/*
 AI-work/reports/**/*.etl
 AI-work/reports/**/*.pcap
 AI-work/reports/**/*.pcapng
+
+# Full per-packet JSON exports may also exceed GitHub's 100 MB object limit.
+# Keep them beside the local capture; commit the compact report and summaries.
+AI-work/reports/control-fault/**/packets.json

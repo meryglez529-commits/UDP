@@ -1,0 +1,1405 @@
+[
+  {
+    "number": 1,
+    "timestamp_epoch": 1789569441.145454,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "01000000000000000001001000000000",
+    "payload_sha256": "c81887252a821754aee36ec3fc9d4d9ea8d885a4ab2e7932b1df57365561c350",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x01",
+    "message": "QUERY",
+    "status": "0x00",
+    "request_id": 1,
+    "address": "0x0010",
+    "data": "0x00000000",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x01",
+        "meaning": "QUERY"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "1",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0010",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000000",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 2,
+    "timestamp_epoch": 1789569441.145509,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "02000000000000000002000012345678",
+    "payload_sha256": "049f115459050d2579da6fba10d62804a76aa926810aa7cc296e3f864386b735",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x02",
+    "message": "SET",
+    "status": "0x00",
+    "request_id": 2,
+    "address": "0x0000",
+    "data": "0x12345678",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x02",
+        "meaning": "SET"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "2",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x12345678",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 3,
+    "timestamp_epoch": 1789569441.145517,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "01000000000000000003000000000000",
+    "payload_sha256": "1018aee8573cb47835044015e48461ae6d684b05be38ced3846d1f9097bb4d5d",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x01",
+    "message": "QUERY",
+    "status": "0x00",
+    "request_id": 3,
+    "address": "0x0000",
+    "data": "0x00000000",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x01",
+        "meaning": "QUERY"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "3",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000000",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 4,
+    "timestamp_epoch": 1789569441.145524,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "01000000000000000004001100000000",
+    "payload_sha256": "41ff5a54440ac1a19fe77a364a9680c76a566148321e663fe76fc85d5f08fdb8",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x01",
+    "message": "QUERY",
+    "status": "0x00",
+    "request_id": 4,
+    "address": "0x0011",
+    "data": "0x00000000",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x01",
+        "meaning": "QUERY"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "4",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0011",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000000",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 5,
+    "timestamp_epoch": 1789569441.14566,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "810000000000000000010010DB500001",
+    "payload_sha256": "284d304ad390e20c6ca2e19e6523b02439fb7a5997b9de6a087e84c4cf6e8644",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 1,
+    "address": "0x0010",
+    "data": "0xDB500001",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "1",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0010",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0xDB500001",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 6,
+    "timestamp_epoch": 1789569441.145661,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "82000000000000000002000012345678",
+    "payload_sha256": "0d64dfb64a0a207151b53bde1d8dac48d28447145b1c8d97943a876a93906be7",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x82",
+    "message": "SET_RESPONSE",
+    "status": "0x00",
+    "request_id": 2,
+    "address": "0x0000",
+    "data": "0x12345678",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x82",
+        "meaning": "SET_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "2",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x12345678",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 7,
+    "timestamp_epoch": 1789569441.145661,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "81000000000000000003000012345678",
+    "payload_sha256": "27b801afc6a604e93adb5755c774de24fc56923584f10ed298391a85ca4d2b7e",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 3,
+    "address": "0x0000",
+    "data": "0x12345678",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "3",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x12345678",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 8,
+    "timestamp_epoch": 1789569441.145661,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "81000000000000000004001100000001",
+    "payload_sha256": "4ec88e33d2ec2c98400a1c134abb913d114baaf283e25f1a84eefe4d23ed7037",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 4,
+    "address": "0x0011",
+    "data": "0x00000001",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "4",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0011",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000001",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 9,
+    "timestamp_epoch": 1789569441.145661,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "81000000000000000004001100000001",
+    "payload_sha256": "4ec88e33d2ec2c98400a1c134abb913d114baaf283e25f1a84eefe4d23ed7037",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 4,
+    "address": "0x0011",
+    "data": "0x00000001",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "4",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0011",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000001",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 10,
+    "timestamp_epoch": 1789569441.146706,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "01000000000000000007000000000000",
+    "payload_sha256": "11b79324010e4e42884aff611c7ab66b943839d277eb8a3b80dc985a5bdafe87",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x01",
+    "message": "QUERY",
+    "status": "0x00",
+    "request_id": 7,
+    "address": "0x0000",
+    "data": "0x00000000",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x01",
+        "meaning": "QUERY"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "7",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000000",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 11,
+    "timestamp_epoch": 1789569441.14673,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "02000000000000000005000050050005",
+    "payload_sha256": "6fd154a64638253873da8036c9c6041db5a23885c899224f3b16b7fe1c7bb610",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x02",
+    "message": "SET",
+    "status": "0x00",
+    "request_id": 5,
+    "address": "0x0000",
+    "data": "0x50050005",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x02",
+        "meaning": "SET"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "5",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x50050005",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 12,
+    "timestamp_epoch": 1789569441.146738,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "01000000000000000008000100000000",
+    "payload_sha256": "bedf31eabbc84d611a8e94a25fb3c60b31e30206d2e205c443cb522d47acf837",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x01",
+    "message": "QUERY",
+    "status": "0x00",
+    "request_id": 8,
+    "address": "0x0001",
+    "data": "0x00000000",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x01",
+        "meaning": "QUERY"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "8",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0001",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000000",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 13,
+    "timestamp_epoch": 1789569441.146745,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "02000000000000000006000160060006",
+    "payload_sha256": "82efad4dcb676025968080c5551c472da1c0c1cef2cd7855330b6c05715289d4",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x02",
+    "message": "SET",
+    "status": "0x00",
+    "request_id": 6,
+    "address": "0x0001",
+    "data": "0x60060006",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x02",
+        "meaning": "SET"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "6",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0001",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x60060006",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 14,
+    "timestamp_epoch": 1789569441.146844,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "82000000000000000005000050050005",
+    "payload_sha256": "3521ac2583a845738e02728bc15f76289fd09c567796e46d3445f7a357df6588",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x82",
+    "message": "SET_RESPONSE",
+    "status": "0x00",
+    "request_id": 5,
+    "address": "0x0000",
+    "data": "0x50050005",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x82",
+        "meaning": "SET_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "5",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x50050005",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 15,
+    "timestamp_epoch": 1789569441.146844,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "82000000000000000006000160060006",
+    "payload_sha256": "6a0eaf185dc8505282b590989f8ddea7dda826b50be4e0acb36eb5e2b7fae440",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x82",
+    "message": "SET_RESPONSE",
+    "status": "0x00",
+    "request_id": 6,
+    "address": "0x0001",
+    "data": "0x60060006",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x82",
+        "meaning": "SET_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "6",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0001",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x60060006",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 16,
+    "timestamp_epoch": 1789569441.146844,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "81000000000000000007000050050005",
+    "payload_sha256": "ede46681c55b5d70933ed23497ff429a77eb08df88dae7c3ed13c47949502a43",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 7,
+    "address": "0x0000",
+    "data": "0x50050005",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "7",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x50050005",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 17,
+    "timestamp_epoch": 1789569441.146845,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "81000000000000000008000160060006",
+    "payload_sha256": "0f1ca76cf1d26cb7c44a0df6ec8be847186bf6d103b1150b10200e61d83db2d0",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 8,
+    "address": "0x0001",
+    "data": "0x60060006",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "8",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0001",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x60060006",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 18,
+    "timestamp_epoch": 1789569441.146938,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "02000000000000000009000090090009",
+    "payload_sha256": "498dfa8972d8989b0e468d7329cc8a3a70cdcdd4817e1bcf1dcbde9ee8c11385",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x02",
+    "message": "SET",
+    "status": "0x00",
+    "request_id": 9,
+    "address": "0x0000",
+    "data": "0x90090009",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x02",
+        "meaning": "SET"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "9",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x90090009",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 19,
+    "timestamp_epoch": 1789569441.147094,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "82000000000000000009000090090009",
+    "payload_sha256": "ddd7f4459c12114311d92428baa6cfb1fcce346701beb61ff76f5866c03c496b",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x82",
+    "message": "SET_RESPONSE",
+    "status": "0x00",
+    "request_id": 9,
+    "address": "0x0000",
+    "data": "0x90090009",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x82",
+        "meaning": "SET_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "9",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x90090009",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 20,
+    "timestamp_epoch": 1789569441.147123,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "02000000000000000009000090090009",
+    "payload_sha256": "498dfa8972d8989b0e468d7329cc8a3a70cdcdd4817e1bcf1dcbde9ee8c11385",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x02",
+    "message": "SET",
+    "status": "0x00",
+    "request_id": 9,
+    "address": "0x0000",
+    "data": "0x90090009",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x02",
+        "meaning": "SET"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "9",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x90090009",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 21,
+    "timestamp_epoch": 1789569441.147268,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "82000000000000000009000090090009",
+    "payload_sha256": "ddd7f4459c12114311d92428baa6cfb1fcce346701beb61ff76f5866c03c496b",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x82",
+    "message": "SET_RESPONSE",
+    "status": "0x00",
+    "request_id": 9,
+    "address": "0x0000",
+    "data": "0x90090009",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x82",
+        "meaning": "SET_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "9",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0000",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x90090009",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 22,
+    "timestamp_epoch": 1789569441.147286,
+    "src_mac": "9C:69:D3:1A:4C:6D",
+    "dst_mac": "02:DB:50:00:00:01",
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "PC -> FPGA",
+    "payload_length": 16,
+    "payload_hex": "0100000000000000000A001100000000",
+    "payload_sha256": "536170b814994568f9a24dde884157bc2126ead21e3d76a710eae570b9938803",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x01",
+    "message": "QUERY",
+    "status": "0x00",
+    "request_id": 10,
+    "address": "0x0011",
+    "data": "0x00000000",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x01",
+        "meaning": "QUERY"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "10",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0011",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000000",
+        "meaning": "32-bit register word"
+      }
+    ]
+  },
+  {
+    "number": 23,
+    "timestamp_epoch": 1789569441.147364,
+    "src_mac": "02:DB:50:00:00:01",
+    "dst_mac": "9C:69:D3:1A:4C:6D",
+    "src_ip": "192.168.1.20",
+    "dst_ip": "192.168.1.10",
+    "src_port": 32000,
+    "dst_port": 32000,
+    "direction": "FPGA -> PC",
+    "payload_length": 16,
+    "payload_hex": "8100000000000000000A001100000004",
+    "payload_sha256": "39599763fe8c59985e2df1ec0f44b1118e77d976187bd0a3b2f9bebcb26829a7",
+    "protocol": "DB500_CONTROL_V1",
+    "decode_status": "ok",
+    "verdict": "PASS",
+    "errors": [],
+    "message_type": "0x81",
+    "message": "QUERY_RESPONSE",
+    "status": "0x00",
+    "request_id": 10,
+    "address": "0x0011",
+    "data": "0x00000004",
+    "byte_fields": [
+      {
+        "name": "message_type",
+        "start": 0,
+        "length": 1,
+        "decode": "0x81",
+        "meaning": "QUERY_RESPONSE"
+      },
+      {
+        "name": "status",
+        "start": 1,
+        "length": 1,
+        "decode": "0x00",
+        "meaning": "request reserved / response OK"
+      },
+      {
+        "name": "request_id",
+        "start": 2,
+        "length": 8,
+        "decode": "10",
+        "meaning": "network byte order"
+      },
+      {
+        "name": "address",
+        "start": 10,
+        "length": 2,
+        "decode": "0x0011",
+        "meaning": "16-bit logical register address"
+      },
+      {
+        "name": "data",
+        "start": 12,
+        "length": 4,
+        "decode": "0x00000004",
+        "meaning": "32-bit register word"
+      }
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "schema": "db500-control-v1-audit-1",
+  "generated_utc": "2026-09-16T14:51:23.332531+00:00",
+  "capture": "D:\\MyFPGAProject\\UDP\\AI-work\\reports\\packet-audit\\20260916-control-timeout\\capture.pcapng",
+  "capture_sha256": "5981e6fcbdf18e61babe8540c00c4620e14fcc21a3093d9c08aa5456c616697b",
+  "decoder_profile": "DB500 CONTROL V1 fixed 16-byte record",
+  "protocol_spec": "D:\\MyFPGAProject\\UDP\\AI-work\\modules\\db500-udp-control\\MODULE.md",
+  "protocol_spec_sha256": "aa1da10c64d6013f3f22d2153506cf423235b3da83340a6dd37ca3b7366378fb",
+  "rtl_source": "D:\\MyFPGAProject\\UDP\\fpga\\led\\led.srcs\\sources_1\\new\\ethernet\\db500_udp_control.v",
+  "rtl_source_sha256": "2a2cfea232c81ba1b9c08df63ac9221b1a8844fb3fd06f12cce5164d48252a36",
+  "packet_count": 23,
+  "overall_verdict": "PASS"
+}

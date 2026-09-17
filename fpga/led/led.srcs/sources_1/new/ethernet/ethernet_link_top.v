@@ -192,6 +192,9 @@ module ethernet_link_top (
     wire       tx_axis_fifo_tvalid;
     wire       tx_axis_fifo_tready;
     wire       tx_axis_fifo_tlast;
+    // The TEMAC client FIFOs belong to the Ethernet link layer.  They are
+    // reset only with the link; a CONTROL generation reset is applied above
+    // this boundary in the UDP transport and application layers.
     wire       fifo_resetn = mac_resetn && link_ready;
 
     wire [27:0] rx_statistics_vector;
