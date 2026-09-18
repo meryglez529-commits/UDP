@@ -26,11 +26,14 @@ module ethernet_link_speed_ctrl (
     reg [2:0] state;
 
     wire [1:0] negotiated_speed = pcs_status_i[11:10];
+    // The DB500 DATA/Jumbo image has one supported operational mode: 1 Gb/s
+    // full duplex.  Auto-negotiation remains active, but a 10/100 result is
+    // treated as communication-not-ready rather than reconfiguring the MAC.
     wire       negotiated_valid = core_ready_i &&
                                   pcs_status_i[0] &&
                                   pcs_status_i[7] &&
                                   pcs_status_i[12] &&
-                                  (negotiated_speed != 2'b11);
+                                  (negotiated_speed == 2'b10);
     wire       mac_reset_active = mac_rx_reset_i || mac_tx_reset_i;
 
     always @(posedge clk_i) begin

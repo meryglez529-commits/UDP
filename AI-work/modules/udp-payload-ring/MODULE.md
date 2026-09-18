@@ -2,8 +2,9 @@
 
 状态：`IMPLEMENTED_HARDWARE_VERIFIED`
 
-2026-09-17：正在按 CONTROL/DATA 不同内容重评缓存组织与 Jumbo 扩展，尚未修改已验收 RTL。
-本文件现有 RX4/TX2、1472-byte 数值仍描述当前实现；扩展边界见第 11 节。
+2026-09-17：CONTROL 继续使用本文已验收的 RX4/TX2 固定槽环和 1472-Byte 上限；DATA 已按
+独立设计实现 32 KiB 可变长度字节环与 16 条描述符。两类缓存同时存在，DATA 不修改本文槽环语义；
+扩展边界见第 11 节和 DATA MODULE.md。
 
 ## 1. 目标与归属
 
@@ -207,7 +208,7 @@ CONTROL/DATA 接口与集成提案见
 设计单元，记录当前已验证的固定槽实现。DATA 已选择独立的字节环报文 FIFO，复用所有权原则，
 不要求沿用本模块的固定槽组织；新缓存契约见 DATA MODULE.md 第 6 节，不叠加重复存储。
 
-- CONTROL 优先评估紧凑的小记录队列；DATA 首版 RX/TX 各 32 KiB 字节环、各 16 条描述符，不沿用 RX4/TX2。
+- CONTROL 保留当前 RX4/TX2、最大 payload1472 的固定槽；DATA 首版 RX/TX 各 32 KiB 字节环、各 16 条描述符。
 - 当前 `MAX_UDP_PAYLOAD` 虽为参数，长度、偏移和 slot_length 仍固定为 11 bit，尚不是真正的
   Jumbo 参数化接口。扩展时统一推导 `LEN_W=$clog2(MAX_UDP_PAYLOAD+1)`、槽内偏移和总 BRAM
   地址宽度，并检查上下游连接和加法中间值，不能只修改深度常数。
@@ -216,10 +217,12 @@ CONTROL/DATA 接口与集成提案见
   内部释放；不增加逐包 TEMAC 结果跟踪。commit 与 release 同周期仍需保持所有权正确。
 - CONTROL 软复位不得清空 DATA 实例。CONTROL 已被公共发送引擎引用的槽应保留到安全收尾，
   再完成对应槽的复位清理，避免网络封装中途读到被清空或复用的数据。
+  按 DATA MODULE.md 第 9 节分离 CONTROL 核心复位、队列接入屏蔽与 TX 队列清理，不能把核心
+  reset 直接送到仍有公共引用的 TX 槽环或其读口适配器；RX 清理同时撤销 parser 的 CONTROL 预留。
 - 扩容后验证跨 2 KiB/4 KiB 的地址、最大长度、奇数长度、指针回绕、同时提交/释放与同步 BRAM
   反压稳定；还需验证 Ethernet client FIFO，payload ring 通过不等于整条 Jumbo 路径通过。
 
 已确认覆盖原工程默认 8172-byte payload；首版最大 payload8972，长度需 14 bit，DATA 容量按上述基线，
-CONTROL 队列及综合资源预算另行确定。默认完整 MAC client 帧长 8214 Byte，已经超过 8 KiB，Ethernet FIFO
+CONTROL 队列保留现有容量，综合资源预算另行核对。默认完整 MAC client 帧长 8214 Byte，已经超过 8 KiB，Ethernet FIFO
 需独立按整帧上限扩容，不能把 payload 小于 8 KiB 当作整条路径可用 8 KiB 的依据。
 不将当前 BRAM 利用率直接外推为扩展后结果。

@@ -165,11 +165,11 @@ module temac_sgmii_tri_speed_rx_client_fifo
   reg  [2:0]  wr_nxt_state;
 
   wire        wr_en;
-  reg  [11:0] wr_addr;
+  reg  [13:0] wr_addr;
   wire        wr_addr_inc;
   wire        wr_start_addr_load;
   wire        wr_addr_reload;
-  reg  [11:0] wr_start_addr;
+  reg  [13:0] wr_start_addr;
   wire [8:0]  wr_eof_data_bram;
   reg  [7:0]  wr_data_bram;
   reg  [7:0]  wr_data_pipe[0:1];
@@ -181,7 +181,7 @@ module temac_sgmii_tri_speed_rx_client_fifo
   reg         wr_eof_bram;
   reg         frame_in_fifo;
 
-  reg  [11:0] rd_addr;
+  reg  [13:0] rd_addr;
   wire        rd_addr_inc;
   reg         rd_addr_reload;
   wire [8:0]  rd_eof_data_bram;
@@ -209,9 +209,9 @@ module temac_sgmii_tri_speed_rx_client_fifo
   wire        update_addr_tog_sync;
   reg         update_addr_tog_sync_reg;
 
-  reg  [11:6] wr_rd_addr;
-  wire [12:0] wr_addr_diff_in;
-  reg  [11:0] wr_addr_diff;
+  reg  [13:6] wr_rd_addr;
+  wire [14:0] wr_addr_diff_in;
+  reg  [13:0] wr_addr_diff;
 
   reg  [3:0]  wr_fifo_status;
   reg         rx_axis_fifo_tlast_int;
@@ -624,14 +624,14 @@ module temac_sgmii_tri_speed_rx_client_fifo
   always @(posedge rx_mac_aclk)
   begin
      if (rx_mac_reset == 1'b1) begin
-        wr_addr <= 12'b0;
+        wr_addr <= 14'b0;
      end
      else begin
         if (wr_addr_reload == 1'b1) begin
            wr_addr <= wr_start_addr;
         end
         else if (wr_addr_inc == 1'b1) begin
-           wr_addr <= wr_addr + 12'b1;
+           wr_addr <= wr_addr + 14'b1;
         end
      end
   end
@@ -640,7 +640,7 @@ module temac_sgmii_tri_speed_rx_client_fifo
   always @(posedge rx_mac_aclk)
   begin
      if (rx_mac_reset == 1'b1) begin
-        wr_start_addr <= 12'b0;
+        wr_start_addr <= 14'b0;
      end
      else begin
         if (wr_start_addr_load == 1'b1) begin
@@ -653,14 +653,14 @@ module temac_sgmii_tri_speed_rx_client_fifo
   always @(posedge rx_fifo_aclk)
   begin
      if (rx_fifo_reset == 1'b1) begin
-        rd_addr <= 12'd0;
+        rd_addr <= 14'd0;
      end
      else begin
         if (rd_addr_reload == 1'b1) begin
-           rd_addr <= rd_addr - 12'd3;
+           rd_addr <= rd_addr - 14'd3;
         end
         else if (rd_addr_inc == 1'b1) begin
-           rd_addr <= rd_addr + 12'd1;
+           rd_addr <= rd_addr + 14'd1;
         end
      end
   end
@@ -762,12 +762,12 @@ module temac_sgmii_tri_speed_rx_client_fifo
   begin
      if (rx_mac_reset == 1'b1) begin
         update_addr_tog_sync_reg <= 1'b0;
-        wr_rd_addr               <= 6'd0;
+        wr_rd_addr               <= 8'd0;
      end
      else begin
         update_addr_tog_sync_reg <= update_addr_tog_sync;
         if (update_addr_tog_sync_reg ^ update_addr_tog_sync) begin
-           wr_rd_addr <= rd_addr[11:6];
+           wr_rd_addr <= rd_addr[13:6];
         end
      end
   end
@@ -778,10 +778,10 @@ module temac_sgmii_tri_speed_rx_client_fifo
   always @(posedge rx_mac_aclk)
   begin
      if (rx_mac_reset == 1'b1) begin
-        wr_addr_diff <= 12'b0;
+        wr_addr_diff <= 14'b0;
      end
      else begin
-        wr_addr_diff <= wr_addr_diff_in[11:0];
+        wr_addr_diff <= wr_addr_diff_in[13:0];
      end
   end
 
@@ -794,7 +794,7 @@ module temac_sgmii_tri_speed_rx_client_fifo
         wr_fifo_full <= 1'b0;
      end
      else begin
-        if (wr_addr_diff[11:4] == 8'b0 && wr_addr_diff[3:2] != 2'b0) begin
+        if (wr_addr_diff[13:4] == 10'b0 && wr_addr_diff[3:2] != 2'b0) begin
            wr_fifo_full <= 1'b1;
         end
         else begin
@@ -822,14 +822,14 @@ module temac_sgmii_tri_speed_rx_client_fifo
          wr_fifo_status <= 4'b0;
      end
      else begin
-        if (wr_addr_diff == 12'b0) begin
+        if (wr_addr_diff == 14'b0) begin
            wr_fifo_status <= 4'b0;
         end
         else begin
-           wr_fifo_status[3] <= !wr_addr_diff[11];
-           wr_fifo_status[2] <= !wr_addr_diff[10];
-           wr_fifo_status[1] <= !wr_addr_diff[9];
-           wr_fifo_status[0] <= !wr_addr_diff[8];
+           wr_fifo_status[3] <= !wr_addr_diff[13];
+           wr_fifo_status[2] <= !wr_addr_diff[12];
+           wr_fifo_status[1] <= !wr_addr_diff[11];
+           wr_fifo_status[0] <= !wr_addr_diff[10];
         end
      end
   end
@@ -850,12 +850,12 @@ module temac_sgmii_tri_speed_rx_client_fifo
 temac_sgmii_tri_speed_bram_tdp #
 (
      .DATA_WIDTH  (9),
-     .ADDR_WIDTH  (12)
+     .ADDR_WIDTH  (14)
   )
   rx_ramgen_i (
      .b_dout  (rd_eof_data_bram),
-     .a_addr  (wr_addr[11:0]),
-     .b_addr  (rd_addr[11:0]),
+     .a_addr  (wr_addr[13:0]),
+     .b_addr  (rd_addr[13:0]),
      .a_clk   (rx_mac_aclk),
      .b_clk   (rx_fifo_aclk),
      .a_din   (wr_eof_data_bram),

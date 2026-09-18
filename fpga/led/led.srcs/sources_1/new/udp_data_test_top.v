@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
-// Board-level CONTROL-only verification image.  External ports match the
-// proven UDP board constraints; all CONTROL diagnostics remain internal.
-module udp_control_test_top #(
+// Board-level CONTROL + DATA verification image.  CONTROL retains its test
+// register bank and watchdog; DATA is echoed byte-for-byte on UDP port 32001.
+module udp_data_test_top #(
     parameter integer WATCHDOG_TIMEOUT_CYCLES = 62500000,
     parameter integer WATCHDOG_RESET_CYCLES   = 32
 ) (
@@ -45,6 +45,21 @@ module udp_control_test_top #(
     wire [7:0]  tx_msg_data;
     wire        tx_msg_data_last;
     wire        tx_msg_error;
+    wire        data_rx_valid;
+    wire        data_rx_ready;
+    wire [7:0]  data_rx_data;
+    wire        data_rx_last;
+    wire [13:0] data_rx_len;
+    wire        data_tx_req_valid;
+    wire        data_tx_req_ready;
+    wire [13:0] data_tx_len;
+    wire        data_tx_valid;
+    wire        data_tx_ready;
+    wire [7:0]  data_tx_data;
+    wire        data_tx_last;
+    wire        data_tx_status_valid;
+    wire        data_tx_status_ready;
+    wire [2:0]  data_tx_status;
 
     wire        reg_req_valid;
     wire        reg_req_ready;
@@ -105,23 +120,23 @@ module udp_control_test_top #(
         .tx_msg_data_i          (tx_msg_data),
         .tx_msg_data_last_i     (tx_msg_data_last),
         .tx_msg_error_o         (tx_msg_error),
-        .data_rx_valid_o        (),
-        .data_rx_ready_i        (1'b1),
-        .data_rx_data_o         (),
-        .data_rx_last_o         (),
-        .data_rx_len_o          (),
-        .data_tx_req_valid_i    (1'b0),
-        .data_tx_req_ready_o    (),
-        .data_tx_len_i          (14'd0),
-        .data_tx_valid_i        (1'b0),
-        .data_tx_ready_o        (),
-        .data_tx_data_i         (8'd0),
-        .data_tx_last_i         (1'b0),
+        .data_rx_valid_o        (data_rx_valid),
+        .data_rx_ready_i        (data_rx_ready),
+        .data_rx_data_o         (data_rx_data),
+        .data_rx_last_o         (data_rx_last),
+        .data_rx_len_o          (data_rx_len),
+        .data_tx_req_valid_i    (data_tx_req_valid),
+        .data_tx_req_ready_o    (data_tx_req_ready),
+        .data_tx_len_i          (data_tx_len),
+        .data_tx_valid_i        (data_tx_valid),
+        .data_tx_ready_o        (data_tx_ready),
+        .data_tx_data_i         (data_tx_data),
+        .data_tx_last_i         (data_tx_last),
         .data_tx_cancel_valid_i (1'b0),
         .data_tx_cancel_ready_o (),
-        .data_tx_status_valid_o (),
-        .data_tx_status_ready_i (1'b1),
-        .data_tx_status_o       (),
+        .data_tx_status_valid_o (data_tx_status_valid),
+        .data_tx_status_ready_i (data_tx_status_ready),
+        .data_tx_status_o       (data_tx_status),
         .rx_fifo_level_o        (),
         .data_rx_fifo_level_o   (),
         .tx_busy_o              (),
@@ -137,6 +152,29 @@ module udp_control_test_top #(
         .tx_accepted_o          (),
         .tx_sent_o              (),
         .tx_input_error_o       ()
+    );
+
+    udp_data_echo_bridge data_echo_i (
+        .clk_i              (link_clock_125m),
+        .resetn_i           (comm_base_resetn),
+        .rx_valid_i         (data_rx_valid),
+        .rx_ready_o         (data_rx_ready),
+        .rx_data_i          (data_rx_data),
+        .rx_last_i          (data_rx_last),
+        .rx_len_i           (data_rx_len),
+        .tx_req_valid_o     (data_tx_req_valid),
+        .tx_req_ready_i     (data_tx_req_ready),
+        .tx_len_o           (data_tx_len),
+        .tx_valid_o         (data_tx_valid),
+        .tx_ready_i         (data_tx_ready),
+        .tx_data_o          (data_tx_data),
+        .tx_last_o          (data_tx_last),
+        .tx_cancel_valid_o  (),
+        .tx_status_valid_i  (data_tx_status_valid),
+        .tx_status_ready_o  (data_tx_status_ready),
+        .tx_status_i        (data_tx_status),
+        .echoed_packets_o   (),
+        .tx_errors_o        ()
     );
 
     db500_udp_control control_i (

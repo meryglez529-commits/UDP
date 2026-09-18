@@ -30,11 +30,17 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sources_1 new ethernet ethernet_link_speed_ctrl.v] \
         [file join $project_dir led.srcs sources_1 new ethernet ethernet_link_top.v] \
         [file join $project_dir led.srcs sources_1 new ethernet fixed_host_rx_parser.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet fixed_host_rx_parser_dual.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_rx_payload_ring.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_tx_payload_ring.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_data_rx_ring.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_data_tx_ring.v] \
         [file join $project_dir led.srcs sources_1 new ethernet fixed_host_tx_engine.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet fixed_host_tx_engine_dual.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_transport_stats.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_transport_fixed_host.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_transport_dual_host.v] \
+        [file join $project_dir led.srcs sources_1 new ethernet udp_data_echo_bridge.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_payload_echo.v] \
         [file join $project_dir led.srcs sources_1 new ethernet udp_sequence_order_monitor.v] \
         [file join $project_dir led.srcs sources_1 new ethernet db500_ctrl_rx_decoder.v] \
@@ -59,7 +65,8 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sources_1 new udp_echo_test_top.v] \
         [file join $project_dir led.srcs sources_1 new udp_perf_diag_top.v]]
     lappend rtl_files \
-        [file join $project_dir led.srcs sources_1 new udp_control_test_top.v]
+        [file join $project_dir led.srcs sources_1 new udp_control_test_top.v] \
+        [file join $project_dir led.srcs sources_1 new udp_data_test_top.v]
     set ip_files [list \
         [file join $project_dir led.srcs sources_1 ip ila_led ila_led.xci] \
         [file join $project_dir led.srcs sources_1 ip ila_mdio ila_mdio.xci] \
@@ -81,6 +88,8 @@ proc led_validate_manifest {project_dir} {
         [file join $project_dir led.srcs sim_1 new ethernet_link_speed_ctrl_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_rx_payload_ring_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_tx_payload_ring_tb.v] \
+        [file join $project_dir led.srcs sim_1 new udp_data_ring_tb.v] \
+        [file join $project_dir led.srcs sim_1 new udp_transport_dual_host_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_transport_fixed_host_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_payload_echo_tb.v] \
         [file join $project_dir led.srcs sim_1 new udp_echo_pipeline_perf_tb.v] \

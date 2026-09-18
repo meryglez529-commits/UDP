@@ -179,11 +179,11 @@ module temac_sgmii_tri_speed_tx_client_fifo #
   wire        wr_sof_int;
   reg  [0:0]  wr_eof_bram;
   reg         wr_eof_reg;
-  reg  [11:0] wr_addr;
+  reg  [13:0] wr_addr;
   wire        wr_addr_inc;
   wire        wr_start_addr_load;
   wire        wr_addr_reload;
-  reg  [11:0] wr_start_addr;
+  reg  [13:0] wr_start_addr;
   reg         wr_fifo_full;
   wire        wr_en;
   reg         wr_ovflow_dst_rdy;
@@ -200,7 +200,7 @@ module temac_sgmii_tri_speed_tx_client_fifo #
   reg         rd_eof;
   reg         rd_eof_reg;
   reg         rd_eof_pipe;
-  reg  [11:0] rd_addr;
+  reg  [13:0] rd_addr;
   wire        rd_addr_inc;
   wire        rd_addr_reload;
   wire [8:0]  rd_eof_data_bram;
@@ -234,7 +234,7 @@ module temac_sgmii_tri_speed_tx_client_fifo #
 
   reg   [3:0] rd_16_count;
   wire        rd_txfer_en;
-  reg  [11:0] rd_addr_txfer;
+  reg  [13:0] rd_addr_txfer;
 
   (* INIT = "0" *)
   reg         rd_txfer_tog = 1'b0;
@@ -245,9 +245,9 @@ module temac_sgmii_tri_speed_tx_client_fifo #
   wire        wr_txfer_en;
 
   (* ASYNC_REG = "TRUE" *)
-  reg  [11:0] wr_rd_addr;
+  reg  [13:0] wr_rd_addr;
 
-  reg  [11:0] wr_addr_diff;
+  reg  [13:0] wr_addr_diff;
 
   reg  [3:0]  wr_fifo_status;
 
@@ -255,11 +255,11 @@ module temac_sgmii_tri_speed_tx_client_fifo #
   reg         rd_retransmit;
   reg         lch_rd_retransmit;
 
-  reg  [11:0] rd_start_addr;
+  reg  [13:0] rd_start_addr;
   wire        rd_start_addr_load;
   wire        rd_start_addr_reload;
 
-  reg  [11:0] rd_dec_addr;
+  reg  [13:0] rd_dec_addr;
 
   wire        rd_transmit_frame;
   wire        rd_retransmit_frame;
@@ -1245,13 +1245,13 @@ endgenerate
   always @(posedge tx_fifo_aclk)
   begin
      if (tx_fifo_reset == 1'b1) begin
-        wr_addr <= 12'b0;
+        wr_addr <= 14'b0;
      end
      else if (wr_addr_reload == 1'b1) begin
         wr_addr <= wr_start_addr;
      end
      else if (wr_addr_inc == 1'b1) begin
-        wr_addr <= wr_addr + 12'b1;
+        wr_addr <= wr_addr + 14'b1;
      end
   end
 
@@ -1259,10 +1259,10 @@ endgenerate
   always @(posedge tx_fifo_aclk)
   begin
      if (tx_fifo_reset == 1'b1) begin
-        wr_start_addr <= 12'b0;
+        wr_start_addr <= 14'b0;
      end
      else if (wr_start_addr_load == 1'b1) begin
-        wr_start_addr <= wr_addr + 12'b1;
+        wr_start_addr <= wr_addr + 14'b1;
      end
   end
 
@@ -1273,14 +1273,14 @@ generate if (FULL_DUPLEX_ONLY == 1) begin : gen_fd_addr
   always @(posedge tx_mac_aclk)
   begin
      if (tx_mac_reset == 1'b1) begin
-        rd_addr <= 12'b0;
+        rd_addr <= 14'b0;
      end
      else begin
         if (rd_addr_reload == 1'b1) begin
            rd_addr <= rd_dec_addr;
         end
         else if (rd_addr_inc == 1'b1) begin
-           rd_addr <= rd_addr + 12'b1;
+           rd_addr <= rd_addr + 14'b1;
         end
      end
   end
@@ -1290,7 +1290,7 @@ generate if (FULL_DUPLEX_ONLY == 1) begin : gen_fd_addr
   always @(posedge tx_mac_aclk)
   begin
      if (tx_mac_reset == 1'b1) begin
-        rd_start_addr <= 12'b0;
+        rd_start_addr <= 14'b0;
      end
      else begin
         rd_start_addr <= rd_addr;
@@ -1307,7 +1307,7 @@ generate if (FULL_DUPLEX_ONLY != 1) begin : gen_hd_addr
   always @(posedge tx_mac_aclk)
   begin
      if (tx_mac_reset == 1'b1) begin
-        rd_addr <= 12'b0;
+        rd_addr <= 14'b0;
      end
      else begin
         if (rd_addr_reload == 1'b1) begin
@@ -1317,7 +1317,7 @@ generate if (FULL_DUPLEX_ONLY != 1) begin : gen_hd_addr
            rd_addr <= rd_start_addr;
         end
         else if (rd_addr_inc == 1'b1) begin
-           rd_addr <= rd_addr + 12'b1;
+           rd_addr <= rd_addr + 14'b1;
         end
      end
   end
@@ -1325,11 +1325,11 @@ generate if (FULL_DUPLEX_ONLY != 1) begin : gen_hd_addr
   always @(posedge tx_mac_aclk)
   begin
      if (tx_mac_reset == 1'b1) begin
-        rd_start_addr <= 12'd0;
+        rd_start_addr <= 14'd0;
      end
      else begin
         if (rd_start_addr_load == 1'b1) begin
-           rd_start_addr <= rd_addr - 12'd6;
+           rd_start_addr <= rd_addr - 14'd6;
         end
      end
   end
@@ -1391,11 +1391,11 @@ endgenerate
   always @(posedge tx_mac_aclk)
   begin
      if (tx_mac_reset == 1'b1) begin
-        rd_dec_addr <= 12'b0;
+        rd_dec_addr <= 14'b0;
      end
      else begin
         if (rd_addr_inc == 1'b1) begin
-           rd_dec_addr <= rd_addr - 12'b1;
+           rd_dec_addr <= rd_addr - 14'b1;
         end
      end
   end
@@ -1550,7 +1550,7 @@ endgenerate
   always @(posedge tx_mac_aclk)
   begin
      if (tx_mac_reset == 1'b1) begin
-        rd_addr_txfer <= 12'b0;
+        rd_addr_txfer <= 14'b0;
      end
      else begin
         if (rd_txfer_en == 1'b1) begin
@@ -1589,7 +1589,7 @@ endgenerate
   always @(posedge tx_fifo_aclk)
   begin
      if (tx_fifo_reset == 1'b1) begin
-        wr_rd_addr <= 12'b0;
+        wr_rd_addr <= 14'b0;
      end
      else if (wr_txfer_en == 1'b1) begin
         wr_rd_addr <= rd_addr_txfer;
@@ -1600,7 +1600,7 @@ endgenerate
   always @(posedge tx_fifo_aclk)
   begin
      if (tx_fifo_reset == 1'b1) begin
-        wr_addr_diff <= 12'b0;
+        wr_addr_diff <= 14'b0;
      end
      else begin
         wr_addr_diff <= wr_rd_addr - wr_addr;
@@ -1616,7 +1616,7 @@ endgenerate
         wr_fifo_full <= 1'b0;
      end
      else begin
-        if (wr_addr_diff[11:4] == 8'b0 && wr_addr_diff[3:2] != 2'b0) begin
+        if (wr_addr_diff[13:4] == 10'b0 && wr_addr_diff[3:2] != 2'b0) begin
            wr_fifo_full <= 1'b1;
         end
         else begin
@@ -1700,14 +1700,14 @@ endgenerate
         wr_fifo_status <= 4'b0;
      end
      else begin
-        if (wr_addr_diff == 12'b0) begin
+        if (wr_addr_diff == 14'b0) begin
            wr_fifo_status <= 4'b0;
         end
         else begin
-           wr_fifo_status[3] <= !wr_addr_diff[11];
-           wr_fifo_status[2] <= !wr_addr_diff[10];
-           wr_fifo_status[1] <= !wr_addr_diff[9];
-           wr_fifo_status[0] <= !wr_addr_diff[8];
+           wr_fifo_status[3] <= !wr_addr_diff[13];
+           wr_fifo_status[2] <= !wr_addr_diff[12];
+           wr_fifo_status[1] <= !wr_addr_diff[11];
+           wr_fifo_status[0] <= !wr_addr_diff[10];
         end
      end
   end
@@ -1728,12 +1728,12 @@ endgenerate
 temac_sgmii_tri_speed_bram_tdp #
   (
      .DATA_WIDTH  (9),
-     .ADDR_WIDTH  (12)
+     .ADDR_WIDTH  (14)
   )
   tx_ramgen_i (
      .b_dout  (rd_eof_data_bram),
-     .a_addr  (wr_addr[11:0]),
-     .b_addr  (rd_addr[11:0]),
+     .a_addr  (wr_addr[13:0]),
+     .b_addr  (rd_addr[13:0]),
      .a_clk   (tx_fifo_aclk),
      .b_clk   (tx_mac_aclk),
      .a_din   (wr_eof_data_bram),

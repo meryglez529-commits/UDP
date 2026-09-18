@@ -81,28 +81,23 @@ module ethernet_link_speed_ctrl_tb;
 
         pcs_status[7] = 1'b1;
         pcs_speed_assign(2'b01);
-        wait (update_count == 2);
+        repeat (6) @(posedge clk);
         #1;
-        if (mac_speed !== 2'b01 || link_ready !== 1'b0)
-            $fatal(1, "100 Mb/s negotiation was not latched");
-        emulate_mac_speed_reset();
-        #1;
-        if (link_ready !== 1'b1)
-            $fatal(1, "link_ready did not follow the observed MAC reset cycle");
+        if (update_count != 1 || link_ready !== 1'b0 || mac_speed !== 2'b10)
+            $fatal(1, "100 Mb/s negotiation was incorrectly accepted");
 
-        pcs_status[7] = 1'b0;
-        @(posedge clk);
-        #1;
-        if (link_ready !== 1'b0)
-            $fatal(1, "link loss did not clear link_ready");
-
-        pcs_status[7] = 1'b1;
         pcs_speed_assign(2'b00);
-        wait (update_count == 3);
+        repeat (6) @(posedge clk);
+        #1;
+        if (update_count != 1 || link_ready !== 1'b0 || mac_speed !== 2'b10)
+            $fatal(1, "10 Mb/s negotiation was incorrectly accepted");
+
+        pcs_speed_assign(2'b10);
+        wait (update_count == 2);
         emulate_mac_speed_reset();
         #1;
-        if (link_ready !== 1'b1 || mac_speed !== 2'b00)
-            $fatal(1, "10 Mb/s renegotiation failed");
+        if (link_ready !== 1'b1 || mac_speed !== 2'b10)
+            $fatal(1, "1 Gb/s renegotiation failed");
 
         pcs_status[12] = 1'b0;
         @(posedge clk);
@@ -114,10 +109,10 @@ module ethernet_link_speed_ctrl_tb;
         pcs_speed_assign(2'b11);
         repeat (4) @(posedge clk);
         #1;
-        if (update_count != 3 || link_ready !== 1'b0)
+        if (update_count != 2 || link_ready !== 1'b0)
             $fatal(1, "reserved SGMII speed was incorrectly accepted");
 
-        $display("PASS: ethernet_link_speed_ctrl tri-speed sequencing");
+        $display("PASS: ethernet_link_speed_ctrl 1G-only sequencing");
         $finish;
     end
 

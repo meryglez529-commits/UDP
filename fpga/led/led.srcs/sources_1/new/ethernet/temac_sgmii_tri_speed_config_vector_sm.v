@@ -174,7 +174,7 @@ end
 assign tx_enable               = 1'b1;
 assign tx_vlan_enable          = 1'b0;
 assign tx_fcs_enable           = 1'b0;
-assign tx_jumbo_enable         = 1'b0;
+assign tx_jumbo_enable         = 1'b1;
 assign tx_fc_enable            = 1'b1;
 assign tx_hd_enable            = RUN_HALF_DUPLEX;
 assign tx_ifg_adjust           = 1'b0;
@@ -185,7 +185,7 @@ assign tx_pause_addr           = 48'h0605040302DA;
 assign rx_enable               = 1'b1;
 assign rx_vlan_enable          = 1'b0;
 assign rx_fcs_enable           = 1'b0;
-assign rx_jumbo_enable         = 1'b0;
+assign rx_jumbo_enable         = 1'b1;
 assign rx_fc_enable            = 1'b1;
 assign rx_hd_enable            = RUN_HALF_DUPLEX;
 assign rx_len_type_chk_disable = 1'b0;
@@ -243,4 +243,3 @@ end
 
 
 endmodule
-

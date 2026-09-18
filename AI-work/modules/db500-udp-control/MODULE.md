@@ -393,7 +393,7 @@ IP/UDP 长度或 checksum 错误、端点不匹配、RX 槽满或复位而被下
 4. 总计三次发送、约 14 ms 后仍无回复，停止提交新请求和全部 CONTROL 重发，进入第 9 节的
    静默恢复。
 
-2/4/8 ms 是主机策略而非线上字段。未来 DATA 满载并完成双通道集成后，重新测量 CONTROL RTT，
+2/4/8 ms 是主机策略而非线上字段。DATA 双通道已完成功能集成；后续在 DATA 满载下重新测量 CONTROL RTT，
 超时基准调整为 `max(2 ms, 4 * RTT p99)`，后两次等待保持基准的 2 倍和 4 倍。
 
 ## 7. 寄存器访问接口
@@ -866,6 +866,9 @@ stats 不设控制状态机。各事件每拍最多计一次，独立计数器�
 
 ## 9. CONTROL watchdog 与统一通信复位
 
+本节保留 CONTROL watchdog 的协议语义。DATA 接入后，watchdog 活动来源和主机恢复协议保持，
+共享 transport 已按第 10.2 节改为 CONTROL 专用清理，不沿用早期单通道整层复位接线。
+
 V1 不设计 session/round 字段、旧状态恢复或续传协议。通信静默期形成明确的新代际边界：复位后
 主机 H=0，FPGA `A=E=1`，双方下一条请求编号为 1。正常配置寄存器值不因通信代际变化而清除。
 
@@ -901,7 +904,7 @@ HOST_GUARD_TIME         = 100 ms
 
 CONTROL 活动事件定义为收到一个完整 UDP payload 的最后一个字节，或一条回复记录被 TX encoder 接收。格式
 错误、重复或超窗口数据仍表示线路正在活动，因此会重新计时；恢复流程必须停止全部 CONTROL
-发送，不能依靠持续重发触发 watchdog。未来 DATA 流量不得给 CONTROL watchdog 提供活动事件。
+发送，不能依靠持续重发触发 watchdog。DATA 流量不给 CONTROL watchdog 提供活动事件。
 
 ### 9.3 复位范围
 
@@ -913,7 +916,7 @@ CONTROL 活动事件定义为收到一个完整 UDP payload 的最后一个字�
 - CONTROL 核心统计计数。
 
 watchdog 自己的 `reset_count` 和最近复位原因跨软通信复位保留，只在基础链路复位时清零。产品
-配置寄存器、业务状态机、DDR 和未来 DATA 的存储状态不由软通信复位清除。测试寄存器适配器也
+配置寄存器、业务状态机、DDR 和 DATA 的存储状态不由软通信复位清除。测试寄存器适配器也
 必须把事务状态复位与 scratch 存储复位分开，以验证该边界。
 
 ### 9.4 主机恢复流程
@@ -953,18 +956,24 @@ udp_control_test_top                    已实现，独立板级验证外壳
 - 板级初测使用简单测试寄存器适配器验证读、写、只读拒绝和非法地址；产品寄存器映射后续替换
   适配器，不修改 CONTROL 核心。
 
-### 10.2 未来 DATA 接入
+### 10.2 DATA 接入结果
 
-2026-09-17 已转入 DATA 透明通道与 Jumbo 的设计阶段，产品寄存器适配暂缓；当前 RTL 仍为
-CONTROL-only。DATA 单独维护设计文档，实现上扩展现有 UDP；接口提案见 `../db500-udp-data/MODULE.md`，不再由通信层定义
-图像块、业务头或补传协议。后续扩展为 CONTROL/DATA 双 UDP 端口时：
+2026-09-17 已完成 DATA 透明通道与 Jumbo 接入，产品寄存器适配暂缓。DATA 单独维护设计文档，
+实现上扩展现有 UDP；接口见 `../db500-udp-data/MODULE.md`，通信层不定义图像块、业务头或补传协议。
+CONTROL/DATA 双 UDP 端口满足：
 
 - CONTROL 继续使用端口 32000；第 3 节固定 16-Byte 线上格式保持不变。
 - UDP 层在 UDP 头阶段按目的端口选择独立 RX 资源，TX 在完整报文边界仲裁。
 - `db500_udp_control` 仍只连接一组完整消息接口和同一寄存器接口，不感知 DATA。
 - DATA 的端口号、通道缓存和共享调度按通信架构与 UDP 设计确定；重传由外部业务负责。
   DATA 接口与请求结果逻辑集成到现有 UDP，是否另设适配 RTL 按职责决定；不得反向修改已冻结的 CONTROL 格式。
-- 双通道加入后补做 DATA 满载条件下的 CONTROL RTT、超时和无饿死验证。
+- 已完成 16 轮 8172-Byte DATA 与 CONTROL 查询并发功能验证；满载 CONTROL RTT 与长时间无饿死测试后续补充。
+- 保留 UDP CONTROL RX4/TX2、最大 payload1472 槽环，16-Byte 格式仍由本模块 decoder 判断。
+- watchdog 只接受 CONTROL 的 rx_seen_event 或回复 load_fire。按 DATA MODULE.md 第 9 节增加
+  RUN/DRAIN_CTRL/CLEAR_HOLD 清理协调：CONTROL 核心先复位，已有 TX 引用保留至复制完毕，
+  然后清理队列；同时满足清理完成及 watchdog 32 周期请求结束后才恢复 CONTROL。
+  RX 当前帧的 CONTROL 禁止提交标记一直保持到 finalize，DATA/ARP 和公共 parser/FIFO 不复位。
+  已声明但未握手的 TX descriptor 也属于旧引用，不能因 CONTROL 核心复位而撤销或提前复用槽。
 
 ## 11. 验证矩阵
 
@@ -1046,7 +1055,7 @@ CONTROL 的板级数据报扰动、固定 seed 随机长稳、watchdog 恢复循
   故障或回复内容错误。
 - 板级测试依次覆盖低速功能、请求/回复软件丢包注入、乱序/重复注入、W=4 持续压力和
   fail-stop，并验证停止发送 600 ms 后编号 1 可以重新执行、scratch 值保持且旧编号状态已清除。
-- DATA 通道正在设计但尚未实现，本阶段不伪造 DATA 并发指标；双端口实现后再增加 DATA 满载共存测试。
+- DATA 通道已实现并通过双端口功能共存与 watchdog 隔离板测；满载 CONTROL RTT 和长时间并发指标仍需单独测量。
 
 ## 12. 实施状态与后续顺序
 
@@ -1059,7 +1068,7 @@ CONTROL 的板级数据报扰动、固定 seed 随机长稳、watchdog 恢复循
 4. 独立 `db500_ctrl_watchdog` 已实现并通过仿真、实现和板级恢复验证；软复位接入 UDP、CONTROL
    和寄存器适配器事务状态，Ethernet client FIFO 保持在链路层复位域。
 5. 产品寄存器适配器接入后重新执行第 11 节回归与板级矩阵。
-6. CONTROL 独立交付稳定后再设计 DATA；DATA 不阻塞 CONTROL V1 的格式和核心实现。
+6. DATA 已在不改变 CONTROL V1 格式和核心接口的前提下接入；实际业务源和产品寄存器适配后重复共存回归。
 
 ## 13. 冻结项与变更规则
 

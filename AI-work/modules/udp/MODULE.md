@@ -1,9 +1,10 @@
 # UDP 固定上位机传输模块
 
-状态：`UDP_ECHO_HARDWARE_PERFORMANCE_10MIN_PASS_WITH_KNOWN_REORDER_GAP`
+状态：`CONTROL_DATA_JUMBO_HARDWARE_PASS`
 
-设计进展（2026-09-17）：DATA 双通道与 Jumbo 扩展进入设计阶段，尚未修改 RTL 或重新验收。
-下文已实现能力仍对应标准 MTU、单端口基线；新增方案见第 7.4 节和用户通信架构文档。
+设计进展（2026-09-17）：DATA 双通道与 Jumbo 扩展已完成 RTL、实现和实板验收。
+标准 MTU 单端口模块仍保留作回归；当前 `udp_top` 使用双端口 transport。通信仅在协商为
+1G 全双工时开放，10/100M 不进入数据面就绪状态。
 
 ## 1. 目标、验收语义与边界
 
@@ -45,9 +46,9 @@ UDP/IP 没有确认、重传、顺序或端到端送达保证，因此本模块�
 | GTX 参考时钟 | `D5/D6` (`MGTREFCLK0_P/N`)；U65 AD9517 OUT0 经 SN65LVDS100 输出的 125 MHz，已外部验收；位于 `GTXE2_COMMON_X0Y1` 所在 common tile |
 | 管理时钟 | `AA3` 100 MHz；`udp_top` 统一 `IBUF+BUFG` 后送入 AD9517 控制器和 `ethernet_link_top`，后者的 `No_buffer` Clocking Wizard 生成带全局缓冲的 200 MHz independent clock，不作为 GTX REFCLK |
 | 以太网 IP | 两个独立 AMD/Xilinx 官方 IP：`gig_ethernet_pcs_pma` 和 `tri_mode_ethernet_mac`；不采用 AXI Ethernet Subsystem |
-| 链路速率 | 已批准完整支持 10/100/1000 Mb/s；M88E1111 铜口与 SGMII 均保留自动协商 |
+| 链路速率 | 仅开放 1G 全双工，10/100 Mb/s 不开放通信；保留 M88E1111 铜口与 SGMII 自动协商 |
 | 固定数据面时钟 | PCS/PMA 的 125 MHz `userclk2` 送给 TEMAC `gtx_clk`，并作为 Ethernet FIFO 用户侧与 UDP 传输层时钟；TEMAC MAC client 低速时钟由 IP 内部管理 |
-| 以太网 MTU | 当前已实现 MTU 1500、UDP payload 最大 1472 字节；新阶段设计 MTU9000/payload8972，覆盖原工程默认8172，尚未启用及验证；继续不支持 IPv4 分片/重组 |
+| 以太网 MTU | CONTROL 最大 payload1472；DATA 已实现并实板验证 MTU9000/payload8972，覆盖原工程默认8172；继续不支持 IPv4 分片/重组 |
 
 两个 Ethernet IP 的 Vivado 2021.1 能力、官方 example design、接口与集成注意事项见
 [`ETHERNET_IP_RESEARCH.md`](ETHERNET_IP_RESEARCH.md)。该调研记录不替代本文件中的最终设计；
@@ -95,11 +96,11 @@ M88E1111 <──────────────────── SGMII ─
                                                    RX/TX Ethernet FIFO
                                                               │ AXI4-Stream, 125 MHz
                                                               ▼
-                                                udp_transport_fixed_host
-                                                 ├─ ARP / IPv4 / UDP validator
-                                                 ├─ RX 全帧槽位 FIFO
-                                                 ├─ TX 全帧暂存与封装器
-                                                 └─ 统计计数器 / 调试状态
+                                                udp_transport_dual_host
+                                                 ├─ 共享 ARP / IPv4 / UDP parser
+                                                 ├─ CONTROL RX4/TX2 槽环
+                                                 ├─ DATA RX/TX 32 KiB 字节环
+                                                 └─ 共享帧级仲裁 / 统计
                                                               │
                                                               ├── 当前 RTL 边界
                                                               ▼
@@ -109,7 +110,7 @@ M88E1111 <──────────────────── SGMII ─
 `gig_ethernet_pcs_pma` 与 `tri_mode_ethernet_mac` 之间采用标准 GMII、`sgmii_clk_en` 和 speed
 反馈连接；链路控制器根据 PCS/PMA 的 SGMII auto-negotiation 状态更新 TEMAC RX/TX speed，
 再把 TEMAC 的速度指示反馈给 PCS/PMA。TEMAC MAC client 接口先经过官方结构的 RX/TX Ethernet
-FIFO，再以固定 125 MHz、8-bit AXI4-Stream 接到 `udp_transport_fixed_host`。该 FIFO 负责吸收
+FIFO，再以固定 125 MHz、8-bit AXI4-Stream 接到 `udp_transport_dual_host`。该 FIFO 负责吸收
 TEMAC RX 无 `tready`、过滤坏帧并隔离 tri-speed MAC client 时钟；它不替代 UDP 完整消息槽位。
 
 所有 ARP/IP/UDP 解析、缓冲 RAM 访问和业务消息接口均位于 125 MHz `userclk2` 域。100 MHz 域
@@ -117,10 +118,10 @@ TEMAC RX 无 `tready`、过滤坏帧并隔离 tri-speed MAC client 时钟；它�
 数据面前必须同步。状态跨回 100 MHz LED/ILA 域时使用专用同步器或计数器快照，绝不直接跨域
 读取多位工作指针。
 
-### 4.1 `udp_transport_fixed_host` 内部结构
+### 4.1 单端口回归模块 `udp_transport_fixed_host`
 
-`udp_transport_fixed_host` 保留为对 `udp_top` 的稳定封装接口，内部按数据所有权拆成五个均运行于
-125 MHz 数据面的子模块：
+`udp_transport_fixed_host` 保留为单端口回归模块；当前 `udp_top` 的双端口实现见第 7.4 节。
+该回归模块内部按数据所有权拆成五个均运行于 125 MHz 数据面的子模块：
 
 ```text
 Ethernet RX AXIS -> fixed_host_rx_parser -> udp_rx_payload_ring -> 业务 RX 消息
@@ -243,13 +244,12 @@ CONTROL 接入已经在 `udp_top` 分离基础复位和软通信复位：
 transport、CONTROL 和外部寄存器适配器事务状态，不接管 Ethernet client FIFO。500 ms 静默
 跨代已完成板级验证；主机网卡软件禁用/启用不再作为恢复机制。
 
-当前 RTL 尚未加入 DATA 接口。DATA 已进入设计阶段，计划按目的 UDP 端口扩展独立逻辑
-通道和完整报文级 TX 仲裁；该扩展不得使 UDP 层解释 CONTROL 字段，也不得改变已经冻结的
+当前 RTL 已按目的 UDP 端口加入 DATA 独立逻辑通道和完整报文级 TX 仲裁；该扩展不使 UDP 层解释 CONTROL 字段，也不改变已经冻结的
 CONTROL 报文和寄存器接口。详细规划见
 [`../db500-udp-control/MODULE.md`](../db500-udp-control/MODULE.md) 和
 [`../db500-udp-application/MODULE.md`](../db500-udp-application/MODULE.md)。
 
-### 7.4 DATA 双通道与 Jumbo 改造提案（未实施）
+### 7.4 DATA 双通道与 Jumbo 实现
 
 DATA 只承接业务组好的 payload；原工程图像模块输出的 12-Byte 业务头也是透明内容。
 图像/RTM 仲裁、图像分包、业务序号、重组和补传不进入本层。DATA 在文档上独立，实现以本层扩展为主，
@@ -257,19 +257,22 @@ DATA 只承接业务组好的 payload；原工程图像模块输出的 12-Byte �
 [DATA MODULE.md](../db500-udp-data/MODULE.md) 第 3～9 节；业务提交完成与缓存释放边界见本层第 7.5 节，
 通道集成、仲裁和复位隔离见用户通信架构 MODULE.md。
 
-本设计单元的具体工作：
+本设计单元的具体实现：
 
-- `udp_top/udp_transport_fixed_host`：暴露 CONTROL/DATA 独立消息接口和配置，继续共享网络引擎；
+- `udp_top/udp_transport_dual_host`：暴露 CONTROL/DATA 独立消息接口和配置，继续共享网络引擎；
   CONTROL 保持端口 32000，DATA 本地/主机端口设计默认均为 32001，可综合期配置，不复制整套协议栈。
-  DATA 使用 RX/TX 各 32 KiB 字节环和各 16 条描述符；CONTROL 固定小记录队列单独收敛。
-- `fixed_host_rx_parser`：在 UDP 头阶段按配置端口锁定目标通道，在该通道预留整包字节及描述符，帧尾只向
+  DATA 使用 RX/TX 各 32 KiB 字节环和各 16 条描述符；CONTROL 保留 RX4/TX2、最大 payload1472 槽环。
+- `fixed_host_rx_parser_dual`：在 UDP 头阶段按配置端口锁定目标通道，在该通道预留整包字节及描述符，帧尾只向
   正确通道 commit/abort；DATA 资源不足时排空该帧，不阻塞后续 CONTROL。按通道统计丢弃。
   当前在帧首锁存唯一 slot_available 的行为必须调整到端口/长度已取得、payload 尚未开始时。
-- 发送仲裁与 `fixed_host_tx_engine`：只选择完整报文，锁定端口、长度、checksum 与来源直到帧尾；
-  CONTROL 有界优先，竞争时连续额度建议 4 帧，随后让出一次给 ARP/DATA 轮询；无竞争时不留空额度。
+  parser 按通道检查容量上限；CONTROL 的 16-Byte 格式检查仍由 decoder 完成，原有异常统计和活动事件保持。
+- 发送仲裁与 `fixed_host_tx_engine_dual`：只选择完整报文，锁定端口、长度、checksum 与来源直到帧尾；
+  CONTROL 有界优先，竞争时连续额度首版 RTL 默认 4 帧，随后让出一次给 ARP/DATA 轮询；无竞争时不留空额度。
   完整选择算法见 DATA MODULE.md 第 10.3 节，最终额度经并发验证确定。
   建议将现有 engine 内 ARP/UDP 选择收敛到独立小型帧仲裁器，由一次 descriptor 握手启动 engine，
   避免外部双通道仲裁与内部 ARP 优先级各自拥有一套调度状态。
+  ARP pending 由仲裁侧保存；启动锁存通道端口/长度/checksum 配置，payload 改用带 valid/ready 的
+  同步 BRAM 字节流，不能直接沿用当前无 valid 的地址读口。契约见 DATA MODULE.md 第 8.5～8.6 节。
 - DATA 交付完成：完整包通过长度/last 检查并提交 TX 队列即成功；不继承原 TEMAC 完成定义。
   不增加逐帧来源/token 跟踪与业务 MAC 完成回传。当前 sent_event/packet_release 仍用于后续
   帧复制进 Ethernet FIFO 时的内部释放和统计，不等同于更早的业务包提交。
@@ -277,24 +280,35 @@ DATA 只承接业务组好的 payload；原工程图像模块输出的 12-Byte �
   在 DATA 配置中均默认 1；不改变 CONTROL 当前强制校验规则。参数语义见 DATA MODULE.md 第 5.3 节。
 - 出口排队：后到 CONTROL 正常排在已选中/已进入 Ethernet FIFO 的帧后面；优先级仅作用于当前待选帧。
   首版由 FIFO 容量及 ready/valid 反压约束积压，不额外设在途帧额度，不等 MAC 发完上一帧再仲裁。
-  正常排队下的 CONTROL 延迟需结合 Jumbo、吞吐及三速条件验证。
+  正常排队下的 CONTROL 延迟需结合 1G Jumbo 并发吞吐验证。
 - CONTROL 软复位：不能继续清空整个公共 transport；仅取消 CONTROL 事务和未发送队列。
   已选中的 CONTROL 帧需保留有效数据直到安全收尾，已排入公共出口的旧帧正常排空；DATA 和公共
   parser/engine/FIFO 保持运行，DATA 活动不刷新 CONTROL watchdog。
+  按 DATA MODULE.md 第 9 节的 RUN/DRAIN_CTRL/CLEAR_HOLD 协调清理；RX 对当前帧保留 CONTROL
+  禁止提交标记，TX 等旧引用解除再清空。CONTROL 核心的复位释放同时等待 32 周期请求结束和清理完成。
 
-Jumbo 当前实际改造点：`udp_top`、transport、parser、TX engine 和 ring 存在固定 `[10:0]`
-长度/索引，需按 payload 与完整帧分别推导宽度；超限帧计数不得回绕。现有 MAC 配置向量将
-`tx_jumbo_enable/rx_jumbo_enable` 固定为 0；RX/TX client FIFO 及其 RAM 为 4096 Byte，需一起
-扩展并验证指针、空满、回滚、帧计数和跨域路径，不能只放大 UDP payload 槽。
+Jumbo 改造已将 DATA 长度/索引扩为 14 bit；MAC 配置向量的
+`tx_jumbo_enable/rx_jumbo_enable` 已置 1，RX/TX client FIFO 及其 RAM 地址扩为 14 bit、每方向
+16 KiB。指针、空满差值、状态高位和 BRAM 地址同步修改，不只放大 UDP payload 槽。
 
 配置以 IP MTU 为统一口径，当前固定 IPv4 头下 `MAX_DATA_PAYLOAD = IP_MTU - 28`；业务头计入
 payload，不额外扣除不存在的 DATA 公共头。已明确至少兼容原工程默认 8172-byte payload，
 对应 IP 总长度 8200、MAC client 帧不含 FCS 8214、含 FCS 8218 Byte。它不是全模式最大值，
-本版设计 MTU9000/payload8972，FPGA 能力待验证；当前主机只读查询确认 JumboPacket=9KB、IPv4 NlMtu=9000，
-查询时未连接，尚未验证 Jumbo 通路。原工程证据和主机设置维护在 DATA MODULE.md 第 3 节。
-默认完整帧已超过 8192 Byte，Ethernet 整帧 FIFO 不能仅扩成 8 KiB；帧计数至少 14 bit，
-Ethernet RX/TX FIFO 首版各按 16 KiB 目标设计，需验证最大帧长、控制预留空间、位宽及跨域逻辑。当前不承诺 Jumbo 已可用。
+本版 MTU9000/payload8972 已在 FPGA 与主机直连链路验证；主机确认 JumboPacket=9KB、IPv4 NlMtu=9000，
+测试时以 1 Gbps 建链。原工程证据和主机设置维护在 DATA MODULE.md 第 3 节。
+默认完整帧已超过 8192 Byte，Ethernet 整帧 FIFO 不能仅扩成 8 KiB；帧内字节索引至少 14 bit。
+Ethernet RX/TX FIFO 在现有官方例程 RTL 上各扩到 16 KiB，不以重新生成例程为前置。RAM 和地址
+12→14 bit，队列内帧数另行推导并保守取 12 bit；同时覆盖 CDC 地址字段、安全余量、占用刻度和
+溢出恢复，不能混淆“帧内字节数”和“FIFO 内帧数”。具体约束见 DATA MODULE.md 第 10.5 节。
+当前承诺范围为已验证的最大 8972-Byte UDP payload，不外推到更大 MTU。
 不增加 IP 分片，超大业务包明确拒绝，业务按公布的上限自行组包。
+
+链路工作范围固定为 1G 全双工，保留现有 IP 和自动协商流程。`ethernet_link_speed_ctrl` 的
+negotiated_valid 在原有状态条件之上仅接受 `pcs_status_i[11:10] == 2'b10`，完成 MAC 配置/复位
+握手后才置 link_ready。低速、半双工或掉线时保持通信未就绪，公共 FIFO 与 CONTROL/DATA 按
+基础链路边界清理；自动协商继续运行。无需新增 PHY MDIO 写入或动态包长降级接口，详细规则见
+DATA MODULE.md 第 10.6 节。PCS/PMA 当前 FPGA logic SGMII 接收弹性缓冲在 1G 下的长度预算可覆盖
+本版 Jumbo，完整链路仍需验收；已有三速回归记录仅描述现有基线，不构成新版本低速支持要求。
 
 ### 7.5 业务交付完成与缓存释放（新通道提案）
 

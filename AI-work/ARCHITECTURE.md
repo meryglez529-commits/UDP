@@ -17,7 +17,7 @@
 
 | Fileset | 当前 active top | 当前任务 |
 |---|---|---|
-| `sources_1` | `udp_control_test_top` | DB500 CONTROL V1 测试寄存器板级镜像；已完成构建、JTAG 下载、抓包与 60 秒压力测试 |
+| `sources_1` | `udp_data_test_top` | DB500 CONTROL 测试 bank + DATA Jumbo 回环镜像；已完成构建、JTAG 下载与双端口板测 |
 | `sim_1` | `ad9517_clock_manager_tb` | AD9517 已验收的初始化与错误场景仿真基线 |
 
 ## 工程模块树
@@ -36,29 +36,34 @@ ethernet_link_top                          [UDP链路层候选顶层；RTL/IP已
 ├── pcs_pma_sgmii_gtx
 └── temac_sgmii_tri_speed + RX/TX Ethernet FIFO
 
-udp_top                                    [已登记；由当前 CONTROL 测试顶层例化]
+udp_top                                    [已登记；CONTROL/DATA 双端口]
 ├── IBUF + BUFG                            [AA3 100 MHz 统一输入缓冲]
 ├── ad9517_clock_manager                   [ENABLE_ILA=0；导出合格时钟状态]
 ├── ethernet_link_top
 │   ├── ethernet_clk_wiz_200m              [No_buffer 输入；输出自带 BUFG]
 │   ├── pcs_pma_sgmii_gtx
 │   └── temac_sgmii_tri_speed + RX/TX Ethernet FIFO
-└── udp_transport_fixed_host            [ARP/IPv4/UDP + 完整载荷槽位]
-    ├── udp_rx_payload_ring              [RX 4 槽、同步 BRAM、提交/回滚]
-    └── udp_tx_payload_ring              [TX 2 槽、同步 BRAM、并行生产/发送]
+└── udp_transport_dual_host              [共享 ARP/IPv4/UDP parser 与帧级仲裁]
+    ├── CONTROL RX4/TX2 固定槽环          [端口 32000]
+    └── DATA RX/TX 32 KiB 字节环          [端口 32001；各16描述符]
 
 udp_echo_test_top                           [保留的开发回显与回归外壳]
 ├── udp_top                                 [完整 AD9517 + Ethernet + UDP 系统]
 └── udp_payload_echo                        [透明消费 RX 消息并送回 TX]
 
-db500_udp_application                      [通信架构；CONTROL 已实现，DATA 通道设计中]
+db500_udp_application                      [通信架构；CONTROL/DATA 已实现]
 ├── db500_udp_control                      [协议与六子模块 RTL 已实现并板级验证]
-└── DATA 通路                              [独立设计文档；在现有 UDP 内扩展，尚未实现]
+└── DATA 通路                              [透明 payload；双端口/Jumbo 已板级验证]
 
-udp_control_test_top                       [当前 active top；CONTROL 板级验证外壳]
+udp_control_test_top                       [保留；CONTROL 板级验证外壳]
 ├── udp_top                                [首阶段沿用单端口 32000 和现有消息接口]
 ├── db500_udp_control                      [已实现的 CONTROL 协议核心]
 └── db500_ctrl_test_reg_bank               [已实现的寄存器边界验收模型]
+
+udp_data_test_top                          [当前 active top；双端口板级验证外壳]
+├── udp_top                                [CONTROL 32000 + DATA 32001]
+├── db500_udp_control + test_reg_bank      [CONTROL 回归]
+└── udp_data_echo_bridge                   [DATA 透明 Jumbo 回环]
 
 udp_perf_diag_top                           [未激活；仅用于 sequence 三边界 ILA 归因]
 ├── udp_top + udp_payload_echo              [与回显镜像相同的数据路径]
@@ -75,8 +80,8 @@ udp_perf_diag_top                           [未激活；仅用于 sequence 三�
 | AD9517 时钟管理 | RTL、仿真、构建和板级验收通过；OUT0 已外部验收为 125 MHz | `ad9517_clock_manager` | [`modules/ad9517/MODULE.md`](modules/ad9517/MODULE.md) |
 | UDP | 固定主机传输 RTL 与回显外壳已通过协议仿真、构建、标准 MTU 回显、十次过载恢复及 797.9 Mbit/s/10 分钟长稳；外部主机发送乱序为已知非阻断缺口 | `ethernet_link_top`、`udp_transport_fixed_host`、`udp_top`、`udp_echo_test_top` | [`modules/udp/MODULE.md`](modules/udp/MODULE.md) |
 | UDP 载荷报文槽环 | RTL、单元/集成仿真、完整展开、构建和板级回显通过；RX 4 槽、TX 2 槽均使用同步 BRAM | `udp_rx_payload_ring`、`udp_tx_payload_ring` | [`modules/udp-payload-ring/MODULE.md`](modules/udp-payload-ring/MODULE.md) |
-| DB500 UDP 用户通信架构 | CONTROL 测试寄存器阶段已上板；正在设计现有 UDP 内的 DATA 通路、双端口隔离、差异化缓存和 Jumbo 支持 | `db500_udp_control`、现有 UDP 的 DATA 扩展 | [`modules/db500-udp-application/MODULE.md`](modules/db500-udp-application/MODULE.md) |
-| DB500 UDP DATA | 首版设计 MTU9000/payload8972；RX/TX 各32 KiB字节环、16描述符，兼容默认8172，待实现/验证 | `udp_top/udp_transport_fixed_host` 内 DATA 通路；适配 RTL 是否单列待定 | [`modules/db500-udp-data/MODULE.md`](modules/db500-udp-data/MODULE.md) |
+| DB500 UDP 用户通信架构 | CONTROL 测试 bank 与 DATA 双端口已上板；共享 parser/仲裁、差异化缓存、Jumbo 和 watchdog 隔离已实现 | `db500_udp_control`、`udp_transport_dual_host`、DATA rings | [`modules/db500-udp-application/MODULE.md`](modules/db500-udp-application/MODULE.md) |
+| DB500 UDP DATA | RTL、XSim、实现和实板通过；仅 1G 全双工，MTU9000/payload8972、RX/TX 各32 KiB/16描述符，Ethernet RX/TX 各16 KiB | `udp_transport_dual_host`、`udp_data_rx_ring`、`udp_data_tx_ring`、`udp_data_test_top` | [`modules/db500-udp-data/MODULE.md`](modules/db500-udp-data/MODULE.md) |
 | DB500 UDP CONTROL | 固定 16-Byte QUERY/SET、W=4 有序窗口、去重/重放、静默 watchdog 和跨代恢复已通过仿真、实现、抓包及 60 秒板测；产品寄存器适配待接入 | `db500_udp_control`、`db500_ctrl_watchdog`、`udp_control_test_top` | [`modules/db500-udp-control/MODULE.md`](modules/db500-udp-control/MODULE.md) |
 
 ## 模块间关系
@@ -87,8 +92,8 @@ udp_perf_diag_top                           [未激活；仅用于 sequence 三�
 - `ad9517_clock_manager` 当前独立运行，不例化 LED、MDIO、GT、PCS/PMA、TEMAC 或 UDP 模块。
 - `udp_top` 已实际例化 `ad9517_clock_manager` 和 `ethernet_link_top`：前者的 `clock_ready_o`
   控制后者复位释放，AD9517 OUT0 则经板上缓冲和专用 MGTREFCLK 管脚进入 PCS/PMA。
-- `udp_top` 同时例化 `udp_transport_fixed_host`，在 125 MHz 域收口 Ethernet FIFO 帧接口并对外提供
-  载荷消息接口。
+- `udp_top` 同时例化 `udp_transport_dual_host`，在 125 MHz 域收口 Ethernet FIFO 帧接口并对外提供
+  CONTROL/DATA 两组载荷接口。
 - `udp_top` 对 AA3 只例化一组 `IBUF+BUFG`，同时驱动 AD9517 控制域和配置为 `No_buffer`
   输入的 200 MHz Clocking Wizard，避免一个封装输入被重复缓冲。
 - `udp_echo_test_top` 例化 `udp_top + udp_payload_echo`，在不引入产品业务协议的情况下闭合
@@ -96,9 +101,7 @@ udp_perf_diag_top                           [未激活；仅用于 sequence 三�
 
 ### 用户通信关系
 
-- 首阶段没有改变 `udp_top` 的单端口实现：现有端口 32000 和唯一一组完整 payload RX/TX 接口
-  已全部作为 CONTROL 通道连接 `db500_udp_control`，没有预留空 DATA RTL 接口。
-- DATA 当前进入设计阶段：在现有 UDP 传输层扩展 CONTROL/DATA 两个固定逻辑端口、独立排队资源、
+- `udp_top` 已扩展为 CONTROL/DATA 两个固定逻辑端口、独立排队资源、
   共享帧级 TX 仲裁和 TX 队列提交完成接口。DATA 透明传输业务已经组好的 UDP payload；业务头、图像分包、
   块身份、存储和重传由外部业务负责。`db500_udp_application` 是架构归属，不是新增同名 RTL。
 - `db500_udp_control` 已从总体协议文档分离为独立设计单元。它负责单寄存器 QUERY/SET、W=4
@@ -106,24 +109,24 @@ udp_perf_diag_top                           [未激活；仅用于 sequence 三�
   状态机。内部按接收解码、窗口、寄存器执行、回复选择、发送编码和统计拆分为六个单一职责
   子模块，每类状态仅有一个写者。产品寄存器地址表、默认值、位域和读写权限由 CONTROL 外部的
   register adapter/register bank 维护。
-- CONTROL-only 集成由 `udp_top` 分离 `comm_base_resetn_o` 与 `comm_resetn_o`。独立 watchdog 在
-  500 ms CONTROL 静默后清空 UDP parser/RX/TX ring、CONTROL 和 register adapter 事务状态，
+- `udp_top` 分离 `comm_base_resetn_o` 与 CONTROL `comm_resetn_o`。独立 watchdog 在
+  500 ms CONTROL 静默后清空 CONTROL RX/TX ring、CONTROL 和 register adapter 事务状态，
   不复位 Ethernet client FIFO、产品寄存器数值或业务状态；它不增加普通 CONTROL 复位报文。
-- 独立 `udp_control_test_top` 已例化现有 `udp_top`、CONTROL 核心和测试寄存器适配器，并登记
-  fileset、作为当前 active top 完成构建和上板；`udp_echo_test_top` 保留为 UDP 回归基线。
-- DATA 已建立独立 MODULE.md，但不强制新增同名 `db500_udp_data.v`；实现上扩展现有 UDP，
+- 独立 `udp_control_test_top` 已完成 CONTROL 构建和上板；当前 active top 为
+  `udp_data_test_top`，`udp_echo_test_top` 保留为 UDP 回归基线。
+- DATA 不增加同名 `db500_udp_data.v`；实现上扩展现有 UDP，
   接口适配或结果逻辑按状态所有权决定是否抽出辅助模块。集成关系归
   用户通信架构，传输层改造归 UDP；DATA 字节环契约归 DATA，既有固定槽实现归 payload ring，存储不重复叠加。
   Jumbo 至少覆盖原工程默认 8172-byte payload（IP MTU 至少 8200）；默认不是全模式最大值，
   主机已核对 JumboPacket=9KB、IPv4 MTU=9000。DATA 首版设计 MTU9000/payload8972，RX/TX 各32 KiB、
-  各16描述符，默认 DATA 端口32001；FPGA 能力、共享仲裁与端到端 Jumbo 验收仍待完成。
-  当前仍是标准 MTU 单端口 RTL，Vivado top 和镜像未变。
+  各16描述符，默认 DATA 端口32001；FPGA、共享仲裁与端到端 Jumbo 已完成实板验收。
+  集成版仅开放 1G 全双工；保留自动协商，低速连接按通信未就绪处理，不设计低速包长降级。
+  当前板级镜像为 `udp_data_test_top`。
 
 ### 已形成的 UDP 缓存关系
 
-- `udp_transport_fixed_host` 已例化独立的 `udp_rx_payload_ring` 和 `udp_tx_payload_ring`
-  管理 UDP payload 所有权。RX 默认 4 槽，TX 默认 2 槽；两者采用固定槽环和同步 Block RAM，
-  TEMAC Ethernet FIFO 继续保留。
+- `udp_transport_dual_host` 复用 `udp_rx_payload_ring` / `udp_tx_payload_ring` 管理 CONTROL，
+  并以 `udp_data_rx_ring` / `udp_data_tx_ring` 管理 DATA 可变长报文；TEMAC Ethernet FIFO 继续保留。
 
 ### 当前验证状态与尚未完成项
 
@@ -134,7 +137,10 @@ udp_perf_diag_top                           [未激活；仅用于 sequence 三�
 - `udp_top.xdc` 当前已启用并作用于 `udp_echo_test_top`；其中包含 DB500 管脚、AD9517 SPI
   时序、reset synchronizer 例外及 125 MHz GTREFCLK 主时钟约束。
 - `udp_transport_fixed_host` 已在 125 MHz 数据面实现 ARP、固定端点 IPv4/UDP、完整载荷槽位和
-  强制 UDP checksum，并由 `udp_top` 直接消费/驱动 Ethernet FIFO AXI4-Stream。
+  强制 UDP checksum，作为单端口回归模块保留。当前 `udp_top` 由 `udp_transport_dual_host`
+  直接消费/驱动 Ethernet FIFO AXI4-Stream。
+- DATA 镜像实现结果为 `WNS=+0.371 ns`、`WHS=+0.021 ns`、阻断 DRC=0；实板已覆盖
+  8972-Byte payload、256 个连续最大包、CONTROL/DATA 共存和 watchdog 隔离。
 - `udp_top` 现在暴露载荷消息接口与调试状态；它们仍是未约束的逻辑端口，在业务模块或专用板级
   测试外壳消费这些端口前，不能直接作为最终 bitstream 顶层。
 - 业务层接入前的 UDP payload 缓存重构已经完成并成为工程基线；RX 4 槽占 2 个 RAMB36，TX
@@ -174,6 +180,6 @@ products，并把本次 `udp_echo_test_top.bit` 易失下载到唯一的 `xc7k32
 同步 BRAM、提交/回滚已实现并完成相同的真实链路回归，细节见
 `modules/udp-payload-ring/DEVELOPMENT.md`。
 
-CONTROL-only 测试寄存器路径已经按 `modules/db500-udp-control/MODULE.md` 完成 RTL、仿真、实现、
-抓包、板级压力和 watchdog 跨代恢复测试。产品寄存器适配暂缓，当前先推进 DATA 双向透明通道、
-双端口隔离、差异化缓存、Jumbo Frames 和 TX 队列提交完成接口的设计；详细接口提案见用户通信架构 MODULE.md。
+CONTROL 测试寄存器路径已经按 `modules/db500-udp-control/MODULE.md` 完成 RTL、仿真、实现、
+抓包、板级压力和 watchdog 跨代恢复测试。DATA 双向透明通道、双端口隔离、差异化缓存、
+Jumbo Frames 和 TX 队列提交结果也已实现并完成实板回归；产品寄存器与实际数据源适配暂缓。
